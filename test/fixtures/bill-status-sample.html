@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>IREPS - View Bills</title>
+<script>var sessionTimeout = 1800; function keepAlive(){}</script>
+<style>.hdr{font-weight:bold}</style>
+</head>
+<body onload="keepAlive()">
+<table width="100%" class="layout">
+  <tr><td>
+    <div id="menu">
+      <a href="/epsn/home.do">Home</a> | <a href="/epsn/logout.do">Logout</a> | Welcome: VENDOR USER
+    </div>
+  </td></tr>
+  <tr><td>
+    <form name="billForm" method="post" action="/epsn/admin/viewBills.do">
+      <input type="hidden" name="org.apache.struts.taglib.html.TOKEN" value="abc">
+      <table>
+        <tr>
+          <td>Railway Zone</td>
+          <td><select name="zone"><option value="">Select Zone</option><option value="NR" selected>Northern Railway</option></select></td>
+          <td>Date Range</td>
+          <td><select name="dateRange"><option value="custom">Select Date</option><option value="90" selected>Last 90 Days</option></select></td>
+          <td><input type="submit" value="Show Results"></td>
+        </tr>
+      </table>
+    </form>
+  </td></tr>
+  <tr><td>
+    <h3>Bill Status</h3>
+    <table border="1" cellpadding="2" id="billTable">
+      <thead>
+        <tr class="hdr">
+          <th rowspan="2">S.No</th>
+          <th rowspan="2">Contract No.</th>
+          <th rowspan="2">Contract Date</th>
+          <th rowspan="2">Bill No.</th>
+          <th rowspan="2">Bill Date</th>
+          <th rowspan="2">Zone</th>
+          <th rowspan="2">Party Name</th>
+          <th rowspan="2">Party Code</th>
+          <th colspan="2">CO6</th>
+          <th rowspan="2">Status</th>
+          <th rowspan="2">Bill Amt (Rs.)</th>
+          <th rowspan="2">Passed Amt (Rs.)</th>
+          <th rowspan="2">Deducted Amt (Rs.)</th>
+          <th rowspan="2">Net Amt (Rs.)</th>
+          <th colspan="2">CO7</th>
+          <th rowspan="2">Payment Advice Date to Bank</th>
+          <th rowspan="2">Accounting Unit</th>
+          <th rowspan="2">Recovery Details</th>
+          <th rowspan="2">Reason For Return</th>
+          <th rowspan="2">View</th>
+        </tr>
+        <tr class="hdr">
+          <th>No</th><th>Date</th>
+          <th>No</th><th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>NR/STORES/2026/0451</td>
+          <td>12/03/2026</td>
+          <td>INV-2026-118</td>
+          <td>02/07/2026</td>
+          <td>NR</td>
+          <td>JOULES TO WATTS BUSINESS SOLUTIONS PVT LTD</td>
+          <td>V-118822</td>
+          <td>CO6/NR/4521</td>
+          <td>05/07/2026</td>
+          <td>Passed &amp; Paid</td>
+          <td>12,45,600.00</td>
+          <td>12,20,000.00</td>
+          <td>25,600.00</td>
+          <td>12,20,000.00</td>
+          <td>CO7/NR/8891</td>
+          <td>10/07/2026</td>
+          <td>14/07/2026</td>
+          <td>FA&amp;CAO/NR/DELHI</td>
+          <td>LD @ 0.5% for delayed supply: 6,228.00<br>Income Tax TDS: 12,456.00<br>Security Deposit: 6,916.00</td>
+          <td></td>
+          <td><a href="javascript:viewBill(1)">View</a></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>NR/STORES/2026/0451</td>
+          <td>12/03/2026</td>
+          <td>INV-2026-121</td>
+          <td>18/07/2026</td>
+          <td>NR</td>
+          <td>JOULES TO WATTS BUSINESS SOLUTIONS PVT LTD</td>
+          <td>V-118822</td>
+          <td>CO6/NR/4602</td>
+          <td>21/07/2026</td>
+          <td>Returned</td>
+          <td>3,10,000.00</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>FA&amp;CAO/NR/DELHI</td>
+          <td></td>
+          <td>Inspection certificate not attached. Please resubmit the bill with RITES inspection certificate and consignee receipt note (CRN) duly signed by the consignee. Bill returned vide letter no. NR/ACC/2026/771 dated 25/07/2026.</td>
+          <td><a href="javascript:viewBill(2)">View</a></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>WR/ELECT/2026/0093</td>
+          <td>05/05/2026</td>
+          <td>INV-2026-130</td>
+          <td>01/08/2026</td>
+          <td>WR</td>
+          <td>JOULES TO WATTS BUSINESS SOLUTIONS PVT LTD</td>
+          <td>V-118822</td>
+          <td>CO6/WR/1187</td>
+          <td>04/08/2026</td>
+          <td>Under Process</td>
+          <td>&#8377; 78,500.00</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>FA&amp;CAO/WR/MUMBAI</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td><a href="javascript:viewBill(3)">View</a></td>
+        </tr>
+        <tr>
+          <td colspan="22" align="center">Showing 1 to 3 of 3 records</td>
+        </tr>
+      </tbody>
+    </table>
+  </td></tr>
+</table>
+<script>document.write("tracking");</script>
+</body>
+</html>

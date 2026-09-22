@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DocLink - IREPS Bill Status Preview</title>
+  <link rel="stylesheet" href="preview.css">
+</head>
+<body>
+  <header class="toolbar">
+    <div class="toolbar-brand">
+      <span class="toolbar-mark" aria-hidden="true">D</span>
+      <div>
+        <strong>DocLink</strong>
+        <span class="toolbar-sub">IREPS Bill Status - printable preview</span>
+      </div>
+    </div>
+    <div class="toolbar-actions">
+      <button id="btn-download" class="btn btn-primary" type="button">Download PDF</button>
+      <button id="btn-print" class="btn" type="button">Print / Save as PDF</button>
+    </div>
+  </header>
+
+  <p id="notice" class="notice" hidden></p>
+
+  <main id="document" class="paper" aria-live="polite">
+    <p class="placeholder">Loading the last retrieved Bill Status…</p>
+  </main>
+
+  <script type="module" src="preview.js"></script>
+</body>
+</html>

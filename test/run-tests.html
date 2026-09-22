@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>DocLink browser tests</title>
+  <style>
+    body { font-family: monospace; padding: 16px; }
+    .pass { color: #1b7f4a; }
+    .fail { color: #b3261e; font-weight: bold; }
+    pre { background: #f4f4f4; padding: 8px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>DocLink browser tests</h1>
+  <p>Bill Status and CRN suites. Run with headless Chrome:
+    <code>chrome --headless=new --allow-file-access-from-files --dump-dom test/run-tests.html</code>
+    or open this file in Chrome with file access enabled.</p>
+  <ul id="results"></ul>
+  <pre id="summary"></pre>
+  <script type="module" src="run-tests.js"></script>
+</body>
+</html>

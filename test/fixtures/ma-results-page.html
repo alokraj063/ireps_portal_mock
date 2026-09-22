@@ -1,0 +1,453 @@
+<!--
+  Sanitised copy of the real IREPS Modification Advice (MA) search result
+  (POST /epsn/searchPO.do with searchCriteria=MA, recordsPerPage=2000).
+
+  Structure, control names and markup quirks follow the captured page:
+  "Total N result(s)" + "Download as Excel(.xlsx)" radio, then
+  <table id="table_id"> > <table id="dTbl2"> with a <thead> (Sr. No., Dept /
+  Rly. Unit, PO No., PO Date, PO_SR, MA No., MA Date, Action(s)) and one
+  <tr class="trPoRow"> per MA. The PO No. cell links to the PO PDF
+  (title="Click to View/Download PO"); the Action(s) cell holds the MA PDF
+  link (title="View/Download MA"), a Manage PO link (href="#") and a
+  javascript: acknowledgement link. PO_SR is the literal text "null" on the
+  real page. Every business value is fictitious; the Struts token is FAKE.
+
+  Rows:
+    1-2  MA dated 18/09/2026 (two units)
+    3-4  MA dated 17/09/2026, PO_SR "NA" / "----" (placeholder variants)
+    5    MA dated 15/09/2026
+    6    MA dated 15/09/2026 WITHOUT a View/Download MA link (defensive case)
+-->
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<html lang="en">
+<head>
+<meta name="description" content="Indian Railways eProcurement Systems">
+<title>PO Search</title>
+<link rel="stylesheet" type="text/css" href="/ireps/css/irepsCommonCss.css">
+<script language="javascript" src="/ireps/pki/CRISPKI.js"></script>
+<script type="text/javascript" src="/ireps/js/jquery.1.11.1.js"></script>
+<script type="text/javascript" src="/ireps/js/works/postRequest.js"></script>
+</head>
+
+<body>
+
+<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" style="background-color:#ffffff;" class="table_br">
+  <tr valign="top">
+    <td colspan="3" height="75" width="100%">
+ <table class="gradientClass" cellpadding="0" cellspacing="0" border="0" width="100%">
+ <tr>
+ <td width="60%" align="center">
+ <div style="color:white; font-size:27px;">
+             Government eMarketplace <br>
+         <font style="color: gold;">Indian Railways E-Procurement System</font>
+         </div>
+ </td>
+ </tr>
+</table>
+ </td>
+  </tr>
+  <tr>
+    <td width="15%" valign="top">
+      <table><tr><td><a HREF="/epsn/home/showHome.do">Home</a></td></tr><tr><td><a HREF="/epsn/home/logout.do">Logout</a></td></tr></table>
+    </td>
+    <td width="70%" valign="top">
+							 <table width="97%">
+								<tr>
+									<td height="20" align="center" class="formLabel">
+										<span class="errorStyle"></span> <br>
+									</td>
+							    </tr>
+							 </table>
+							<form name="searchPOForm" method="post" action="/epsn/searchPO.do" onsubmit="return submitSearch();"><input type="hidden" name="org.apache.struts.taglib.html.TOKEN" value="FAKE-TOKEN-0123456789abcdef0123456789abcdef">
+							<input type="hidden" name="pageNo" value="1" id="pageNo">
+							<fieldset class="fieldsetStyle">
+							<legend class="legendStyle">Search</legend>
+							<table width="97%" border="0" cellpadding="2" class="tblSearch">
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;"><b>Search For</b></td>
+									<td>
+										<select name="searchCriteria" onchange="searchCriteriaChange();" style="width:400px;" class="comboStyle" id="searchCriteria"><option value="PO">PO</option>
+										<option value="RNOTE">Receipt Note (R-NOTE)</option>
+										<option value="DRR">Receipted Challan (DRR)</option>
+										<option value="MA" selected="selected">Modification Advice (MA)</option>
+										<option value="Rej">Rejection Advice (IMMS)</option>
+										<option value="CRC">Consignment Receipt Certificate (CRC)</option>
+										<option value="CRN">Consignment Receipt Note (CRN)</option>
+										<option value="Conversation">Conversation (Latest) on Warranty Rejection Advice (UDM)</option></select>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;"><b>Railway</b></td>
+									<td>
+										<select name="rly" style="width:260px;" class="comboStyle" id="selRly"><option value="-1">All</option>
+										<option value="22">Banaras Locomotive Works</option>
+										<option value="42">CORE</option>
+										<option value="98">CRIS</option>
+										<option value="94">CRIS-IMMS</option>
+										<option value="43">Central Organization for Modernization of Workshops</option>
+										<option value="01">Central Railway</option>
+										<option value="21">Chittaranjan Locomotive Works</option>
+										<option value="10">East Central Railway</option>
+										<option value="11">East Coast Railway</option>
+										<option value="02">Eastern Railway</option>
+										<option value="99">IREPS</option>
+										<option value="57">IRIEEN</option>
+										<option value="59">IRITM</option>
+										<option value="23">Integral Coach Factory</option>
+										<option value="17">Kolkata Metro Railway</option>
+										<option value="41">Konkan Railway Corporation Ltd</option>
+										<option value="27">Modern Coach Factory</option>
+										<option value="55">National Academy of Indian Railways</option>
+										<option value="12">North Central Railway</option>
+										<option value="05">North East Frontier Railway</option>
+										<option value="04">North Eastern Railway</option>
+										<option value="13">North Western Railway</option>
+										<option value="28">NorthEast Frontier Railway (Construction)</option>
+										<option value="03">Northern Railway</option>
+										<option value="26">Patiala Locomotive Works</option>
+										<option value="31">RDSO</option>
+										<option value="29">RWP/BELA</option>
+										<option value="24">Rail Coach Factory</option>
+										<option value="25">Rail Wheel Factory</option>
+										<option value="44">RailTel Corporation of India Ltd</option>
+										<option value="30">Railway Board</option>
+										<option value="07">South Central Railway</option>
+										<option value="18">South Coast Railway</option>
+										<option value="14">South East Central Railway</option>
+										<option value="08">South Eastern Railway</option>
+										<option value="15">South Western Railway</option>
+										<option value="06">Southern Railway</option>
+										<option value="16">West Central Railway</option>
+										<option value="09">Western Railway</option>
+										<option value="45">Workshop Project Organization</option></select>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;">
+									<input type="radio" name="searchRange" value="3">&nbsp;&nbsp;<b>PO No.</b>
+									</td>
+									<td>
+										<input type="text" name="poNo" maxlength="16" value="" onclick="javascript:document.forms[0].searchRange[0].click();" style="width:260px;" id="poNo">
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;padding-left: 30px;" id="iclabel" style="display:none;"><b>IC No.</b></td>
+									<td id="icval" style="display:none;">
+										<input type="text" name="icNo" maxlength="16" value="" style="width:260px;" id="icNo">
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;padding-left: 30px;">
+										<input type="radio" name="searchRange" value="2">&nbsp;&nbsp;<b>Select Date</b>
+									</td>
+									<td >
+										From<span style="color: #c00000;"> *</span>
+										<input type="text" name="dateFrom" size="12" value="" readonly="readonly" id="ddmmyyDateformat1">
+									    <a id="dateImgFrom" href="javascript:NewCal('ddmmyyDateformat1','ddmmyyyy');" onclick="javascript:document.forms[0].searchRange[1].click();">
+									    	<img src="/ireps/images/common/cal.gif" width="16" height="16" border="0" alt="Pick a date">
+										</a>
+										&nbsp;&nbsp;
+										To<span style="color: #c00000;"> *</span>
+										<input type="text" name="dateTo" size="12" value="" readonly="readonly" id="ddmmyyDateformat2">
+										<a href="javascript:NewCal('ddmmyyDateformat2','ddmmyyyy')" onclick="javascript:document.forms[0].searchRange[1].click();">
+											<img src="/ireps/images/common/cal.gif" width="16" height="16" border="0" alt="Pick a date">
+										</a>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;padding-left: 30px;">
+										<input type="radio" name="searchRange" value="1" checked="checked" onclick="last180Days();">&nbsp;&nbsp;<b>Last 180 Days</b>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;"><b>Records Per Page</b></td>
+									<td>
+										<input type="text" name="recordsPerPage" value="20" id="recordsPerPageTxt">
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td colspan="2" align="center">
+										<input type="submit" name="submit" tabindex="7" value="Show Results" class="buttonStyle">
+										&nbsp;&nbsp;
+										<input type="button" name="" value="Reset" onclick="resetSearch();" class="buttonStyle">
+									</td>
+								</tr>
+								<tr><td colspan="2">&nbsp;</td></tr>
+							</table>
+							</fieldset>
+							<input type="hidden" name="searchCriteria" id="searchCriteria" value="">
+							<input type="hidden" name="signerUserType" id="signerUserType" value='4'>
+							</form>
+							<table><tr><td>&nbsp;</td></tr></table>
+							<div style="width:100%;" id="divResults">
+							<table cellpadding=2 style="border-collapse: collapse; margin-bottom: 10px; width:97%;">
+								<tr style="line-height: 30px;" class='ndtCls'>
+									<td class="formLabel"><b>Total 6 result(s)</b></td>
+								</tr>
+								<tr>
+									<td style="line-height: 30px;">
+										<input type="radio" name="exportRadio" value="E" onclick="exportExcel();"/> <b>Download as Excel(.xlsx)</b>
+									</td>
+								</tr>
+							</table>
+							<table border=1 cellpadding=2 style="border-collapse: collapse; width:97%; background-color: #FFFFFF;" id="table_id" >
+							<tr>
+							<td>
+							<table class="recordsTbl" id="dTbl2" >
+								<thead class="sticky-header">
+									<tr style="line-height: 26px;" class="trHdr">
+										<th class="searchDtlCls">Sr. No.</th>
+										<th class="searchDtlCls">Dept / Rly. Unit</th>
+										<th class="searchDtlCls">PO No.</th>
+										<th class="searchDtlCls">PO Date</th>
+										<th class="searchDtlCls">PO_SR</th>
+										<th class="searchDtlCls">MA No.</th>
+										<th class="searchDtlCls">MA Date</th>
+										<th class='actionThCls'>Action(s)</th>
+									</tr>
+								</thead>
+								<tbody>
+<!-- MA rows from here -->
+									<tr style="line-height: 26px;" class="trPoRow">
+										<td class="searchDtlCls">1</td>
+										<td class="searchDtlCls">HQ/NR</td>
+										<td class="searchDtlCls">
+											<a href="/ireps/etender/pdfdocs/MMIS/PO/2026/03/07250369100001.pdf" title="Click to View/Download PO" target="_blank">07250369100001 </a>
+										</td>
+										<td> 20/07/2026</td>
+										<td class="searchDtlCls">null</td>
+										<td class="searchDtlCls">007001</td>
+										<td class="searchDtlCls"> 18/09/2026 </td>
+										<td class="dataText">
+											<a title="View/Download MA" class="linkStyle" href="/ireps/etender/pdfdocs/MMIS/PO/2026/03/07250369100001_007001.pdf" target="_blank" >
+												<img src="/ireps/images/common/View Negotiattion Details.png" alt="View/Download" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a title="Manage Your Purchase Order" class="linkStyle" href="#" onclick="postRequest('/epsn/dispatchParticulars/showDispatchParticular.do?rly=03&poKey=11000&poNo=07250369100001')" >
+												<img src="/ireps/images/common/icon_view.gif" alt="Manage Your Purchase Order" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a onclick="viewDocAckDetails('11000');" href="javascript:void(0);">
+												<img width="15" height="15" title="View Document Acknowledgement Details" alt="Click here to View Document Acknowledgement Details." src="/ireps/images/common/viewpayment.gif" border="0">
+											</a>
+										</td>
+									</tr>
+
+									<tr style="line-height: 26px;" class="trPoRow">
+										<td class="searchDtlCls">2</td>
+										<td class="searchDtlCls">HQ/SECR</td>
+										<td class="searchDtlCls">
+											<a href="/ireps/etender/pdfdocs/MMIS/PO/2026/14/02254132100002.pdf" title="Click to View/Download PO" target="_blank">02254132100002 </a>
+										</td>
+										<td> 25/03/2026</td>
+										<td class="searchDtlCls">null</td>
+										<td class="searchDtlCls">002002</td>
+										<td class="searchDtlCls"> 18/09/2026 </td>
+										<td class="dataText">
+											<a title="View/Download MA" class="linkStyle" href="/ireps/etender/pdfdocs/MMIS/PO/2026/14/02254132100002_002002.pdf" target="_blank" >
+												<img src="/ireps/images/common/View Negotiattion Details.png" alt="View/Download" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a title="Manage Your Purchase Order" class="linkStyle" href="#" onclick="postRequest('/epsn/dispatchParticulars/showDispatchParticular.do?rly=14&poKey=12000&poNo=02254132100002')" >
+												<img src="/ireps/images/common/icon_view.gif" alt="Manage Your Purchase Order" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a onclick="viewDocAckDetails('12000');" href="javascript:void(0);">
+												<img width="15" height="15" title="View Document Acknowledgement Details" alt="Click here to View Document Acknowledgement Details." src="/ireps/images/common/viewpayment.gif" border="0">
+											</a>
+										</td>
+									</tr>
+
+									<tr style="line-height: 26px;" class="trPoRow">
+										<td class="searchDtlCls">3</td>
+										<td class="searchDtlCls">HQ/SECR</td>
+										<td class="searchDtlCls">
+											<a href="/ireps/etender/pdfdocs/MMIS/PO/2026/14/02255012100003.pdf" title="Click to View/Download PO" target="_blank">02255012100003 </a>
+										</td>
+										<td> 29/06/2026</td>
+										<td class="searchDtlCls">NA</td>
+										<td class="searchDtlCls">002003</td>
+										<td class="searchDtlCls"> 17/09/2026 </td>
+										<td class="dataText">
+											<a title="View/Download MA" class="linkStyle" href="/ireps/etender/pdfdocs/MMIS/PO/2026/14/02255012100003_002003.pdf" target="_blank" >
+												<img src="/ireps/images/common/View Negotiattion Details.png" alt="View/Download" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a title="Manage Your Purchase Order" class="linkStyle" href="#" onclick="postRequest('/epsn/dispatchParticulars/showDispatchParticular.do?rly=14&poKey=13000&poNo=02255012100003')" >
+												<img src="/ireps/images/common/icon_view.gif" alt="Manage Your Purchase Order" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a onclick="viewDocAckDetails('13000');" href="javascript:void(0);">
+												<img width="15" height="15" title="View Document Acknowledgement Details" alt="Click here to View Document Acknowledgement Details." src="/ireps/images/common/viewpayment.gif" border="0">
+											</a>
+										</td>
+									</tr>
+
+									<tr style="line-height: 26px;" class="trPoRow">
+										<td class="searchDtlCls">4</td>
+										<td class="searchDtlCls">HQ/ECR</td>
+										<td class="searchDtlCls">
+											<a href="/ireps/etender/pdfdocs/MMIS/PO/2026/10/03254959100004.pdf" title="Click to View/Download PO" target="_blank">03254959100004 </a>
+										</td>
+										<td> 07/08/2025</td>
+										<td class="searchDtlCls">----</td>
+										<td class="searchDtlCls">003004</td>
+										<td class="searchDtlCls"> 17/09/2026 </td>
+										<td class="dataText">
+											<a title="View/Download MA" class="linkStyle" href="/ireps/etender/pdfdocs/MMIS/PO/2026/10/03254959100004_003004.pdf" target="_blank" >
+												<img src="/ireps/images/common/View Negotiattion Details.png" alt="View/Download" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a title="Manage Your Purchase Order" class="linkStyle" href="#" onclick="postRequest('/epsn/dispatchParticulars/showDispatchParticular.do?rly=10&poKey=14000&poNo=03254959100004')" >
+												<img src="/ireps/images/common/icon_view.gif" alt="Manage Your Purchase Order" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a onclick="viewDocAckDetails('14000');" href="javascript:void(0);">
+												<img width="15" height="15" title="View Document Acknowledgement Details" alt="Click here to View Document Acknowledgement Details." src="/ireps/images/common/viewpayment.gif" border="0">
+											</a>
+										</td>
+									</tr>
+
+									<tr style="line-height: 26px;" class="trPoRow">
+										<td class="searchDtlCls">5</td>
+										<td class="searchDtlCls">GSD/R/SECR</td>
+										<td class="searchDtlCls">
+											<a href="/ireps/etender/pdfdocs/MMIS/PO/2026/14/02262612100005.pdf" title="Click to View/Download PO" target="_blank">02262612100005 </a>
+										</td>
+										<td> 02/06/2026</td>
+										<td class="searchDtlCls">null</td>
+										<td class="searchDtlCls">000005</td>
+										<td class="searchDtlCls"> 15/09/2026 </td>
+										<td class="dataText">
+											<a title="View/Download MA" class="linkStyle" href="/ireps/etender/pdfdocs/MMIS/PO/2026/14/02262612100005_000005.pdf" target="_blank" >
+												<img src="/ireps/images/common/View Negotiattion Details.png" alt="View/Download" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a title="Manage Your Purchase Order" class="linkStyle" href="#" onclick="postRequest('/epsn/dispatchParticulars/showDispatchParticular.do?rly=14&poKey=15000&poNo=02262612100005')" >
+												<img src="/ireps/images/common/icon_view.gif" alt="Manage Your Purchase Order" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a onclick="viewDocAckDetails('15000');" href="javascript:void(0);">
+												<img width="15" height="15" title="View Document Acknowledgement Details" alt="Click here to View Document Acknowledgement Details." src="/ireps/images/common/viewpayment.gif" border="0">
+											</a>
+										</td>
+									</tr>
+
+									<tr style="line-height: 26px;" class="trPoRow">
+										<td class="searchDtlCls">6</td>
+										<td class="searchDtlCls">HQ/NER</td>
+										<td class="searchDtlCls">
+											<a href="/ireps/etender/pdfdocs/MMIS/PO/2026/04/24250726100006.pdf" title="Click to View/Download PO" target="_blank">24250726100006 </a>
+										</td>
+										<td> 04/11/2025</td>
+										<td class="searchDtlCls">null</td>
+										<td class="searchDtlCls">003006</td>
+										<td class="searchDtlCls"> 15/09/2026 </td>
+										<td class="dataText">
+											
+											<a title="Manage Your Purchase Order" class="linkStyle" href="#" onclick="postRequest('/epsn/dispatchParticulars/showDispatchParticular.do?rly=04&poKey=16000&poNo=24250726100006')" >
+												<img src="/ireps/images/common/icon_view.gif" alt="Manage Your Purchase Order" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a onclick="viewDocAckDetails('16000');" href="javascript:void(0);">
+												<img width="15" height="15" title="View Document Acknowledgement Details" alt="Click here to View Document Acknowledgement Details." src="/ireps/images/common/viewpayment.gif" border="0">
+											</a>
+										</td>
+									</tr>
+<!-- MA rows up to here -->
+								</tbody>
+							</table>
+							</td>
+							</tr>
+							</table>
+							<table>
+								<tr>
+									<td align="right" colspan="6">
+										<td colspan=5 align="right"><!-- MA pagination --></td></tr>
+									</td>
+								</tr>
+							</table>
+							<table><tr><td>&nbsp;</td></tr></table>
+							</div>
+    </td>
+    <td width="15%" valign="top">&nbsp;</td>
+  </tr>
+</table>
+
+<script>
+function submitSearch() {
+	document.getElementById('pageNo').value = '1';
+	if(!validateDateRange()) {
+		return false;
+	}
+}
+function searchCriteriaChange(){
+	var searchCriteria =document.getElementById('searchCriteria').value;
+	$('.ndtCls').show();
+	if(searchCriteria=="IC"){
+		document.getElementById('iclabel').style.display="table-cell";
+		document.getElementById('icval').style.display="table-cell";
+	}else{
+		document.getElementById('iclabel').style.display="none";
+		document.getElementById('icval').style.display="none";
+		document.getElementById('icNo').value="";
+	}
+}
+function last180Days() {
+	document.getElementById('ddmmyyDateformat1').value = '';
+	document.getElementById('ddmmyyDateformat2').value = '';
+}
+function resetSearch() {
+	document.forms[0].dateFrom.value = '';
+	document.forms[0].dateTo.value = '';
+	document.forms[0].rly.value = '-1';
+	document.getElementById('poNo').value = '';
+	document.getElementById('divResults').style.display = 'none';
+}
+function validateDateRange() {
+	if(document.forms[0].searchRange[0].checked){
+		var poNo = document.getElementById('poNo').value;
+		if(!poNo || poNo.length<1){
+			alert("Please enter PO No!");
+			return false;
+		}
+	}
+	var range = document.forms[0].searchRange[1].checked;
+	if(range === true) {
+		range = '2';
+	}
+	else {
+		range = undefined;
+	}
+	if(range == '2') {
+		var dateFrom = document.getElementById('ddmmyyDateformat1').value;
+		var dateTo = document.getElementById('ddmmyyDateformat2').value;
+		if(!dateFrom || dateFrom.lenth < 1 || dateFrom.length != 10) {
+			alert("Please enter From Date!");
+			return false;
+		}
+		if(!dateTo || dateTo.length < 1 || dateTo.length != 10) {
+			alert("Please enter To Date!");
+			return false;
+		}
+		var values = dateFrom.split("/");
+		var fdd = values[0], fmm = values[1], fyyyy = values[2];
+		values = dateTo.split("/");
+		var tdd = values[0], tmm = values[1], tyyyy = values[2];
+		var dFrom = new Date(fmm+"/"+fdd+"/"+fyyyy);
+		var dTo = new Date(tmm+"/"+tdd+"/"+tyyyy);
+		if(dFrom > dTo) {
+			alert("From Date must be earlier than To Date!");
+			return false;
+		}
+		var timeDiff = Math.abs(dTo.getTime() - dFrom.getTime());
+		var daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+		if(daysDiff > 180) {
+			alert("Selected Date Range should be within 180 days.");
+			return false;
+		}
+	}
+	else {
+		return true;
+	}
+	return true;
+}
+</script>
+<script>
+$(document).ready(function() {
+	$('.ndtCls').hide();
+	$('#dTbl2').DataTable( { dom: 'flrtipB' } );
+} );
+</script>
+</body>
+</html>

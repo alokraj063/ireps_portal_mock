@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "DocLink",
+  "version": "1.1.0",
+  "description": "Download IREPS Bill Status reports and CRN (Consignment Receipt Note) PDFs; upload business documents.",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "assets/icon16.png",
+    "32": "assets/icon32.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "permissions": [
+    "downloads",
+    "storage",
+    "tabs",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "http://localhost:8765/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "DocLink - IREPS Document Automation",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "32": "assets/icon32.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'"
+  }
+}

@@ -1,0 +1,41 @@
+<!--
+  Authenticated viewBills.do page with the vendorPartyCodeForm (fake token)
+  and no <table id="table_id"> blocks. IREPS' exact "no records" wording is
+  not known; this fixture uses a plain message in the errorStyle span.
+-->
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<html lang="en">
+<head><title>View Bills</title></head>
+<body>
+<table width="100%">
+  <tr><td><a HREF="/epsn/home/showHome.do">Home</a> | <a HREF="/epsn/home/logout.do">Logout</a></td></tr>
+  <tr><td>
+    <table width="97%">
+      <tr><td height="20" align="center" class="formLabel"><span class="errorStyle">No Records Found for the selected period</span> <br></td></tr>
+    </table>
+    <form name="vendorPartyCodeForm" method="post" action="/epsn/admin/viewBills.do" onsubmit="return submitSearch();"><input type="hidden" name="org.apache.struts.taglib.html.TOKEN" value="FAKE-TOKEN-ffffffffffffffffffffffffffffffff">
+      <table width="97%" border="0" cellpadding="2" class="tblSearch">
+        <tr>
+          <td class="formLabel_publish"><input type="radio" name="searchRange" value="3">&nbsp;&nbsp;Railway Zone</td>
+          <td><select name="zone" style="width:260px;" class="comboStyle" id="selRly"><option value="-1">All</option><option value="01">CR</option><option value="13">ICF</option></select></td>
+        </tr>
+        <tr><td class="formLabel_publish" colspan="4">Date Range</td></tr>
+        <tr>
+          <td class="formLabel_publish"><input type="radio" name="searchRange" value="2">&nbsp;&nbsp;Select Date</td>
+          <td>From<span style="color: #c00000;"> *</span> <input type="text" name="dateFrom" size="12" value="" readonly="readonly" id="ddmmyyDateformat1">
+              &nbsp;&nbsp;To<span style="color: #c00000;"> *</span> <input type="text" name="dateTo" size="12" value="" readonly="readonly" id="ddmmyyDateformat2"></td>
+        </tr>
+        <tr><td class="formLabel_publish"><input type="radio" name="searchRange" value="1" checked="checked" onclick="last180Days();">&nbsp;&nbsp;Last 90 Days</td></tr>
+        <tr><td align="center" COLSPAN=4><input type="submit" name="submit" tabindex="7" value="Show Results" class="buttonStyle"> <input type="hidden" name="searchParam" id="searchParam"></td></tr>
+        <tr><th><input type="radio" name="exportRadio" value="E" onclick="exportExcel();"/> Download as Excel(.xls)</th></tr>
+      </table>
+    </form>
+    <table>
+      <!-- Display Data From here -->
+      <!-- Display Data Up to here -->
+    </table>
+  </td></tr>
+</table>
+<script>function submitSearch(){return true;} function last180Days(){} function exportExcel(){}</script>
+</body>
+</html>

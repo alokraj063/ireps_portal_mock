@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>DocLink offscreen parser</title>
+</head>
+<body>
+  <!--
+    Invisible offscreen document. The MV3 service worker has no DOMParser,
+    so IREPS HTML is parsed here (reason: DOM_PARSER). The IREPS markup is
+    parsed into a detached Document and never attached to this page.
+  -->
+  <script type="module" src="offscreen.js"></script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!--
+  Sanitised copy of the real IREPS "View Bills" response (viewBills.do).
+
+  Structure, markup, whitespace, comments and JavaScript follow the captured
+  page. Every business value (contract numbers, bill numbers, party name,
+  party code, amounts, CO6/CO7 numbers, accounting units) is fictitious and
+  the Struts token is a fixed FAKE value - never a real session token.
+
+  Blocks (in order):
+    1. REGISTERED       CO7 "----", Payment Advice "NA"
+    2. RETURNED         Bill Number "-", Reason For Return section
+    3. PAYMENT MADE     CO7 present, Recovery Details section (3 lines)
+    4. PASSED           CO7 present, Payment Advice "NA"
+    5. PAYMENT MADE     no Recovery Details section
+    6. REGISTERED       same Bill Number as block 2 (lifecycle duplicate)
+-->
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<html lang="en">
+<head>
+<meta name="description" content="Indian Railways eProcurement Systems">
+<title>View Bills</title>
+<link rel="stylesheet" type="text/css" href="/ireps/css/irepsCommonCss.css">
+<script language="javascript" src="/ireps/pki/CRISPKI.js"></script>
+<script type="text/javascript" src="/ireps/js/jquery.1.11.1.js"></script>
+</head>
+
+<body>
+
+<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" style="background-color:#ffffff;" class="table_br">
+  <tr valign="top">
+    <td colspan="3" height="75" width="100%">
+ <table class="gradientClass" cellpadding="0" cellspacing="0" border="0" width="100%">
+ <tr>
+ <td width="60%" align="center">
+ <div style="color:white; font-size:27px;">
+             Government eMarketplace <br>
+         <font style="color: gold;">Indian Railways E-Procurement System</font>
+         </div>
+ </td>
+ </tr>
+</table>
+ </td>
+  </tr>
+  <tr>
+    <td width="15%" valign="top">
+      <table><tr><td><a HREF="/epsn/home/showHome.do">Home</a></td></tr><tr><td><a HREF="/epsn/home/logout.do">Logout</a></td></tr></table>
+    </td>
+    <td width="70%" valign="top">
+							 <table width="97%">
+								<tr>
+									<td height="20" align="center" class="formLabel">
+										<span class="errorStyle"></span> <br>
+									</td>
+							    </tr>
+							 </table>
+							  <form name="vendorPartyCodeForm" method="post" action="/epsn/admin/viewBills.do" onsubmit="return submitSearch();"><input type="hidden" name="org.apache.struts.taglib.html.TOKEN" value="FAKE-TOKEN-0123456789abcdef0123456789abcdef">
+
+							<table width="97%" border="0" cellpadding="2" class="tblSearch">
+
+								<tr>
+									<td class="formLabel_publish" style="width:20%;"><input type="radio" name="searchRange" value="3">&nbsp;&nbsp;Railway Zone</td>
+									<td>
+
+										<select name="zone" onclick="javascript:document.forms[0].searchRange[0].click();" style="width:260px;" class="comboStyle" id="selRly"><option value="-1">All</option>
+
+											<option value="12">BLW</option>
+<option value="11">CLW</option>
+<option value="66">COFM</option>
+<option value="52">CORE</option>
+<option value="01">CR</option>
+<option value="00">CRIS</option>
+<option value="31">ECOR</option>
+<option value="30">ECR</option>
+<option value="02">ER</option>
+<option value="13">ICF</option>
+<option value="70">IRWO</option>
+<option value="20">MCF</option>
+<option value="41">MTPC</option>
+<option value="22">MTPK</option>
+<option value="32">NCR</option>
+<option value="04">NER</option>
+<option value="05">NFR</option>
+<option value="03">NR</option>
+<option value="33">NWR</option>
+<option value="15">PLW</option>
+<option value="51">RB</option>
+<option value="25">RCF</option>
+<option value="58">RDSO</option>
+<option value="71">RLDA</option>
+<option value="14">RWF</option>
+<option value="24">RWP</option>
+<option value="09">SCR</option>
+<option value="37">SCoR</option>
+<option value="34">SECR</option>
+<option value="07">SER</option>
+<option value="06">SR</option>
+<option value="35">SWR</option>
+<option value="36">WCR</option>
+<option value="08">WR</option></select>
+
+									</td>
+								</tr>
+																<tr style="line-height: 26px;">
+									<td class="formLabel_publish" colspan="4" style="width:20%;">Date Range</td>
+								</tr>
+
+								<tr style="line-height: 26px;">
+
+									<td class="formLabel_publish" style="width:20%;padding-left: 30px;">
+										<input type="radio" name="searchRange" value="2">&nbsp;&nbsp;Select Date
+									</td>
+									<td >
+										From<span style="color: #c00000;"> *</span>
+										<input type="text" name="dateFrom" size="12" value="" readonly="readonly" id="ddmmyyDateformat1">
+									    <a id="dateImgFrom" href="javascript:NewCal('ddmmyyDateformat1','ddmmyyyy');" onclick="javascript:document.forms[0].searchRange[1].click();">
+									    	<img src="/ireps/images/common/cal.gif" width="16" height="16" border="0" alt="Pick a date">
+										</a>
+										&nbsp;&nbsp;
+										To<span style="color: #c00000;"> *</span>
+										<input type="text" name="dateTo" size="12" value="" readonly="readonly" id="ddmmyyDateformat2">
+										<a href="javascript:NewCal('ddmmyyDateformat2','ddmmyyyy')" onclick="javascript:document.forms[0].searchRange[1].click();">
+											<img src="/ireps/images/common/cal.gif" width="16" height="16" border="0" alt="Pick a date">
+										</a>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="formLabel_publish" style="width:20%;padding-left: 30px;">
+										<input type="radio" name="searchRange" value="1" checked="checked" onclick="last180Days();">&nbsp;&nbsp;Last 90 Days
+									</td>
+								</tr>
+								<tr><td colspan="4">&nbsp;</td></tr>
+
+								<tr>
+									<td colspan="2">&nbsp;&nbsp;</td>
+								</tr>
+								<tr>
+									<td align="center" COLSPAN=4>
+										<input type="submit" name="submit" tabindex="7" value="Show Results" class="buttonStyle">
+										<input type="hidden" name="searchParam" id="searchParam">
+									</td>
+								</tr>
+								<tr><td colspan="2">&nbsp;</td></tr>
+								<tr style="line-height: 30px;">
+								<th>
+								<input type="radio" name="exportRadio" value="E" onclick="exportExcel();"/> Download as Excel(.xls)
+								</th>
+								<th style="line-height: 30px;">
+								Search <input type="text" style="width: 500px; height: 30px;" " id="globalSearch" placeholder="Search..." onkeyup="searchTables();">
+								</th>
+								</tr>
+
+							</table>
+						</form>
+						<table><tr><td>&nbsp;</td></tr></table>
+
+							<table>
+
+							 <!-- Display Data From here -->
+
+							    <tr><td>
+							    <table><tr><td>&nbsp;</td></tr><tr><td>&nbsp;</td></tr></table>
+							     <table class="boxStyle"  width="100%" border="1" cellspacing="0" id="table_id" >
+							   <tr height="30px"  style="background-color: #DCEAF7;">
+							   <th>Contract No </th>
+							 <th>Contract Date</th>
+							   <th>Bill Number </th>
+							    <th>Bill Date </th>
+							    <th>Zone </th>
+							    <th colspan="5">Party Name </th>
+							     <th>PartyCode</th>
+							   </tr>
+							   <tr>
+							   <td>13240000000101</td>
+							   <td>03/08/2024</td>
+							   <td>9001000101</td>
+							    <td> 16/09/2026</td>
+							   <td>ICF</td>
+							   <td colspan="5">SAMPLE RAIL COMPONENTS PRIVATE LIMITED-UNIT 1</td>
+							   <td>MM00:001</td>
+
+							   </tr>
+
+							    <tr style="background-color: #FFF3CD;">
+<!-- 						   			<th width="5%"  style="text-align:center;">S.No</FONT></th>
+ -->						   	<th width="15%" style="text-align:left;padding-left:10px">CO6 No</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO6 Date</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Status</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Bill Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Passed Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Deducted Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Net Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO7 No</th>
+						   			<th width="15%" style="text-align:left;padding-left:10px">CO7 Date</th>
+							   <th>Payment Advice Date to Bank</th>
+							     <th>Accounting Unit(Division)</th>
+						  	    </tr>
+								<tr>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 13010326020001</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 18/09/2026</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> REGISTERED</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 118000</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 118000</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 0</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 118000</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> ----</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> ----</td>
+							   <td>NA</td>
+							     <td>ICF HEADQUARTER</td>
+						       </tr>
+
+						  		 </table>
+
+
+							    <tr><td>
+							    <table><tr><td>&nbsp;</td></tr><tr><td>&nbsp;</td></tr></table>
+							     <table class="boxStyle"  width="100%" border="1" cellspacing="0" id="table_id" >
+							   <tr height="30px"  style="background-color: #DCEAF7;">
+							   <th>Contract No </th>
+							 <th>Contract Date</th>
+							   <th>Bill Number </th>
+							    <th>Bill Date </th>
+							    <th>Zone </th>
+							    <th colspan="5">Party Name </th>
+							     <th>PartyCode</th>
+							   </tr>
+							   <tr>
+							   <td>3702WC25000099</td>
+							   <td>03/04/2025</td>
+							   <td>-</td>
+							    <td> 08/09/2026</td>
+							   <td>SCoR</td>
+							   <td colspan="5">SAMPLE RAIL COMPONENTS PRIVATE LIMITED-UNIT 1</td>
+							   <td>MM00:001</td>
+
+							   </tr>
+
+							    <tr style="background-color: #FFF3CD;">
+<!-- 						   			<th width="5%"  style="text-align:center;">S.No</FONT></th>
+ -->						   	<th width="15%" style="text-align:left;padding-left:10px">CO6 No</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO6 Date</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Status</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Bill Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Passed Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Deducted Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Net Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO7 No</th>
+						   			<th width="15%" style="text-align:left;padding-left:10px">CO7 Date</th>
+							   <th>Payment Advice Date to Bank</th>
+							     <th>Accounting Unit(Division)</th>
+						  	    </tr>
+								<tr>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 37020126001002</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 08/09/2026</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> RETURNED</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 3082402</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 3082402</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 0</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 2968191.9</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> ----</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> ----</td>
+							   <td>NA</td>
+							     <td>VISHAKHAPATNAM DIVISION</td>
+						       </tr>
+
+						  		 <tr>
+						  		 	<th colspan="11" style="background-color: #F8D7DA;">Reason For Return</th>
+						  		 </tr>
+						  		 <tr>
+						  		 	<td colspan="11">#VARY IN SCHEDULE B- COST OF MATERIAL PLEASE CHECK</td>
+						  		 </tr>
+
+
+						  		 </table>
+
+
+							    <tr><td>
+							    <table><tr><td>&nbsp;</td></tr><tr><td>&nbsp;</td></tr></table>
+							     <table class="boxStyle"  width="100%" border="1" cellspacing="0" id="table_id" >
+							   <tr height="30px"  style="background-color: #DCEAF7;">
+							   <th>Contract No </th>
+							 <th>Contract Date</th>
+							   <th>Bill Number </th>
+							    <th>Bill Date </th>
+							    <th>Zone </th>
+							    <th colspan="5">Party Name </th>
+							     <th>PartyCode</th>
+							   </tr>
+							   <tr>
+							   <td>3702WC25000099</td>
+							   <td>03/04/2025</td>
+							   <td>9001000103</td>
+							    <td> 11/09/2026</td>
+							   <td>SCoR</td>
+							   <td colspan="5">SAMPLE RAIL COMPONENTS PRIVATE LIMITED-UNIT 1</td>
+							   <td>MM00:001</td>
+
+							   </tr>
+
+							    <tr style="background-color: #FFF3CD;">
+<!-- 						   			<th width="5%"  style="text-align:center;">S.No</FONT></th>
+ -->						   	<th width="15%" style="text-align:left;padding-left:10px">CO6 No</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO6 Date</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Status</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Bill Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Passed Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Deducted Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Net Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO7 No</th>
+						   			<th width="15%" style="text-align:left;padding-left:10px">CO7 Date</th>
+							   <th>Payment Advice Date to Bank</th>
+							     <th>Accounting Unit(Division)</th>
+						  	    </tr>
+								<tr>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 37020126001003</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 11/09/2026</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> PAYMENT MADE</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 3082402</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 3082402</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 114210.1</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 2968191</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 37020126700003</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 11/09/2026</td>
+							   <td>11/09/2026</td>
+							     <td>VISHAKHAPATNAM DIVISION</td>
+						       </tr>
+
+						  		 <tr>
+						  		 	<th colspan="11" style="background-color: #F5C6CB;">Recovery Details</th>
+						  		 </tr>
+						  		 <tr>
+						  		 	<td colspan="11">GST TDS DEDUCTION: 52244.1<br>INCOME TAX - CONTR (Company): 61648<br>OTHER CHARGES: 318</td>
+						  		 </tr>
+
+						  		 </table>
+
+
+							    <tr><td>
+							    <table><tr><td>&nbsp;</td></tr><tr><td>&nbsp;</td></tr></table>
+							     <table class="boxStyle"  width="100%" border="1" cellspacing="0" id="table_id" >
+							   <tr height="30px"  style="background-color: #DCEAF7;">
+							   <th>Contract No </th>
+							 <th>Contract Date</th>
+							   <th>Bill Number </th>
+							    <th>Bill Date </th>
+							    <th>Zone </th>
+							    <th colspan="5">Party Name </th>
+							     <th>PartyCode</th>
+							   </tr>
+							   <tr>
+							   <td>01240000000404</td>
+							   <td>21/11/2024</td>
+							   <td>9001000104</td>
+							    <td> 02/09/2026</td>
+							   <td>CR</td>
+							   <td colspan="5">SAMPLE RAIL COMPONENTS PRIVATE LIMITED-UNIT 2</td>
+							   <td>MM00:002</td>
+
+							   </tr>
+
+							    <tr style="background-color: #FFF3CD;">
+<!-- 						   			<th width="5%"  style="text-align:center;">S.No</FONT></th>
+ -->						   	<th width="15%" style="text-align:left;padding-left:10px">CO6 No</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO6 Date</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Status</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Bill Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Passed Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Deducted Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Net Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO7 No</th>
+						   			<th width="15%" style="text-align:left;padding-left:10px">CO7 Date</th>
+							   <th>Payment Advice Date to Bank</th>
+							     <th>Accounting Unit(Division)</th>
+						  	    </tr>
+								<tr>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 01010326004004</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 03/09/2026</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> PASSED</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 456780</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 450000</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 6780</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 450000</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 01010326700404</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 10/09/2026</td>
+							   <td>NA</td>
+							     <td>CR HEADQUARTER</td>
+						       </tr>
+
+						  		 </table>
+
+
+							    <tr><td>
+							    <table><tr><td>&nbsp;</td></tr><tr><td>&nbsp;</td></tr></table>
+							     <table class="boxStyle"  width="100%" border="1" cellspacing="0" id="table_id" >
+							   <tr height="30px"  style="background-color: #DCEAF7;">
+							   <th>Contract No </th>
+							 <th>Contract Date</th>
+							   <th>Bill Number </th>
+							    <th>Bill Date </th>
+							    <th>Zone </th>
+							    <th colspan="5">Party Name </th>
+							     <th>PartyCode</th>
+							   </tr>
+							   <tr>
+							   <td>08240000000505</td>
+							   <td>19/12/2024</td>
+							   <td>9001000105</td>
+							    <td> 08/05/2026</td>
+							   <td>ICF</td>
+							   <td colspan="5">SAMPLE RAIL COMPONENTS PRIVATE LIMITED-UNIT 1</td>
+							   <td>MM00:001</td>
+
+							   </tr>
+
+							    <tr style="background-color: #FFF3CD;">
+<!-- 						   			<th width="5%"  style="text-align:center;">S.No</FONT></th>
+ -->						   	<th width="15%" style="text-align:left;padding-left:10px">CO6 No</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO6 Date</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Status</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Bill Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Passed Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Deducted Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Net Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO7 No</th>
+						   			<th width="15%" style="text-align:left;padding-left:10px">CO7 Date</th>
+							   <th>Payment Advice Date to Bank</th>
+							     <th>Accounting Unit(Division)</th>
+						  	    </tr>
+								<tr>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 13010326011505</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 01/07/2026</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> PAYMENT MADE</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 8977440</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 8977440</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 0</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 8977440</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 13010326700505</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 04/07/2026</td>
+							   <td>04/07/2026</td>
+							     <td>ICF HEADQUARTER</td>
+						       </tr>
+
+						  		 </table>
+
+
+							    <tr><td>
+							    <table><tr><td>&nbsp;</td></tr><tr><td>&nbsp;</td></tr></table>
+							     <table class="boxStyle"  width="100%" border="1" cellspacing="0" id="table_id" >
+							   <tr height="30px"  style="background-color: #DCEAF7;">
+							   <th>Contract No </th>
+							 <th>Contract Date</th>
+							   <th>Bill Number </th>
+							    <th>Bill Date </th>
+							    <th>Zone </th>
+							    <th colspan="5">Party Name </th>
+							     <th>PartyCode</th>
+							   </tr>
+							   <tr>
+							   <td>3702WC25000099</td>
+							   <td>03/04/2025</td>
+							   <td>9001000103</td>
+							    <td> 05/09/2026</td>
+							   <td>SCoR</td>
+							   <td colspan="5">SAMPLE RAIL COMPONENTS PRIVATE LIMITED-UNIT 1</td>
+							   <td>MM00:001</td>
+
+							   </tr>
+
+							    <tr style="background-color: #FFF3CD;">
+<!-- 						   			<th width="5%"  style="text-align:center;">S.No</FONT></th>
+ -->						   	<th width="15%" style="text-align:left;padding-left:10px">CO6 No</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO6 Date</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Status</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Bill Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Passed Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Deducted Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">Net Amt</th>
+						   			<th width="10%" style="text-align:left;padding-left:10px">CO7 No</th>
+						   			<th width="15%" style="text-align:left;padding-left:10px">CO7 Date</th>
+							   <th>Payment Advice Date to Bank</th>
+							     <th>Accounting Unit(Division)</th>
+						  	    </tr>
+								<tr>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 37020126001001</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 05/09/2026</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> REGISTERED</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 3082402</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 3082402</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 0</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> 3082402</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> ----</td>
+						         	 <td class="dataText" style="text-align:left;padding-left:10px"> ----</td>
+							   <td>NA</td>
+							     <td>VISHAKHAPATNAM DIVISION</td>
+						       </tr>
+
+						  		 </table>
+
+						  		 </table>
+
+						   <!-- Display Data Up to here -->
+
+						  </td>
+						 </tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+
+		</td>
+	</tr>
+</table>
+
+
+<script>
+function ViewBills(partyCode,ZoneCode){
+	mywindow=window.open('/epsn/admin/viewBills.do?taskAction=viewBills&partyCode='+partyCode+'&zone_code='+ZoneCode,'mywindow','height=250,width=1000,scrollbars=yes,resizable=1');
+	mywindow.moveTo(350, 350);
+	return false;
+}
+
+function last180Days() {
+	document.getElementById('ddmmyyDateformat1').value = '';
+	document.getElementById('ddmmyyDateformat2').value = '';
+}
+
+function submitSearch() {
+	if(!validateDateRange()) {
+		return false;
+	}
+}
+
+function validateDateRange() {
+	if(document.forms[0].searchRange[1].checked) {
+		var dateFrom = document.getElementById('ddmmyyDateformat1').value;
+		var dateTo = document.getElementById('ddmmyyDateformat2').value;
+		if(!dateFrom || dateFrom.length < 1 || dateFrom.length != 10) {
+			alert("Please enter From Date!");
+			return false;
+		}
+		if(!dateTo || dateTo.lenth < 1 || dateTo.length != 10) {
+			alert("Please enter To Date!");
+			return false;
+		}
+		var values = dateFrom.split("/");
+		var fdd = values[0], fmm = values[1], fyyyy = values[2];
+		values = dateTo.split("/");
+		var tdd = values[0], tmm = values[1], tyyyy = values[2];
+		var dFrom = new Date(fmm+"/"+fdd+"/"+fyyyy);
+		var dTo = new Date(tmm+"/"+tdd+"/"+tyyyy);
+		if(dFrom > dTo) {
+			alert("From Date must be earlier than To Date!");
+			return false;
+		}
+		var timeDiff = Math.abs(dTo.getTime() - dFrom.getTime());
+		var daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+		if(daysDiff > 180) {
+			alert("Selected Date Range should be within 180 days.");
+			return false;
+		}
+	}
+	else {
+		return true;
+	}
+	return true;
+}
+
+function exportExcel() {
+    var filename = "bill";
+    let tables = document.querySelectorAll('#table_id');
+    const headers = [
+        "Contract No","Contract Date","Bill Date","Bill Number","Zone",
+        "Party Name","PartyCode",
+        "CO6 No","CO6 Date","Status","Bill Amt","Passed Amt",
+        "Deducted Amt","Net Amt","CO7 No","CO7 Date",
+        "Payment Advice Date","Accounting Unit",
+        "Reason For Return","Recovery Details"
+    ];
+    /* trimmed: builds an .xls from the tables above */
+}
+
+function searchTables() {
+    let value = document.getElementById("globalSearch").value.toLowerCase();
+    let tables = document.querySelectorAll("#table_id");
+    tables.forEach(table => {
+        let text = table.innerText.toLowerCase();
+        table.style.display = text.indexOf(value) > -1 ? "" : "none";
+    });
+}
+</script>
+</body>
+</html>
