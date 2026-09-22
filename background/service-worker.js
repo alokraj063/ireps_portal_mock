@@ -892,6 +892,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true; // keep the channel open for the async response
 });
 
+/**
+ * The UI lives in Chrome's side panel (docked to the right edge, full height,
+ * the page content shrinks to make room) rather than a floating popup.
+ * Clicking the toolbar icon opens/closes it. Called at top level so it also
+ * applies after every service-worker restart.
+ */
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => {
+  logger.warn("Could not configure side panel behaviour", error);
+});
+
 chrome.runtime.onInstalled.addListener((details) => {
   logger.info(`DocLink installed (${details.reason})`);
 });

@@ -35,12 +35,14 @@ const el = {
   progress: $("progress"),
   steps: Array.from(document.querySelectorAll("#steps li")),
   progressMessage: $("progress-message"),
-  resultSuccess: $("result-success"),
-  resultSummary: $("result-summary"),
-  resultFilter: $("result-filter"),
-  resultFilename: $("result-filename"),
-  btnShowFile: $("btn-show-file"),
-  btnPreview: $("btn-preview"),
+  mainResult: $("main-result"),
+  mainResultTitle: $("main-result-title"),
+  mainResultSummary: $("main-result-summary"),
+  mainResultFilter: $("main-result-filter"),
+  mainResultFilename: $("main-result-filename"),
+  btnMainShowFile: $("btn-main-show-file"),
+  btnMainPreview: $("btn-main-preview"),
+  btnMainDismiss: $("btn-main-dismiss"),
   resultError: $("result-error"),
   errorTitle: $("error-title"),
   errorMessage: $("error-message"),
@@ -73,7 +75,8 @@ const STEP_FOR_STAGE = {
 };
 const ALL_ZONES = "-1";
 
-let lastDownloadId = null;
+/** chrome.downloads id of the download shown in the bottom result panel. */
+let resultDownloadId = null;
 
 /* -------------------------------------------------------------------------- */
 /* Messaging                                                                  */
@@ -154,8 +157,33 @@ function setButtonBusy(busy, label) {
   el.btnLabel.textContent = label || "Download Bill Status";
 }
 
+/* ------------------------------------------------ shared bottom result panel */
+
+/**
+ * Show the details of a completed download (any type) in the panel at the
+ * bottom of the main view, and return to the main view.
+ * @param {{ title: string, summary?: string, filter?: string, filename?: string, downloadId?: number|null, preview?: boolean }} details
+ */
+function showResult(details) {
+  showView("main");
+  resultDownloadId = details.downloadId ?? null;
+  el.mainResultTitle.textContent = details.title || "";
+  el.mainResultSummary.textContent = details.summary || "";
+  el.mainResultFilter.textContent = details.filter || "";
+  el.mainResultFilename.textContent = details.filename || "";
+  el.btnMainShowFile.hidden = resultDownloadId === null;
+  el.btnMainPreview.hidden = details.preview !== true;
+  el.mainResult.hidden = false;
+  el.mainResult.scrollIntoView({ block: "nearest" });
+}
+
+function hideResult() {
+  el.mainResult.hidden = true;
+  resultDownloadId = null;
+}
+
 function resetResults() {
-  el.resultSuccess.hidden = true;
+  hideResult();
   el.resultError.hidden = true;
   el.resultError.classList.remove("is-notice");
   el.btnErrorPreview.hidden = true;
@@ -177,22 +205,25 @@ function renderProgress(stageId, message) {
   if (stageId === "CONNECTED" || index > STAGE_ORDER.indexOf("CONNECTED")) setConnection("connected", "Connected");
 }
 
+/** Back to the original main screen (options collapsed) with the details at the bottom. */
 function renderComplete(summary) {
-  showView("main");
   resetResults();
   el.progress.hidden = true;
+  el.options.open = false;
   setButtonBusy(false);
   setConnection("connected", "Connected");
-  lastDownloadId = summary.downloadId ?? null;
   const n = summary.recordCount ?? 0;
   const extras = [];
   if (summary.skippedCount) extras.push(`${summary.skippedCount} incomplete record${summary.skippedCount === 1 ? "" : "s"} skipped`);
   if (summary.reconSent) extras.push("sent to Recon Engine");
-  el.resultSummary.textContent = `Records found: ${n}${extras.length ? ` (${extras.join(", ")})` : ""}`;
-  el.resultFilter.textContent = summary.filter ? `Search: ${summary.filter}` : "";
-  el.resultFilename.textContent = summary.filename || "";
-  el.btnShowFile.hidden = lastDownloadId === null;
-  el.resultSuccess.hidden = false;
+  showResult({
+    title: "✓ Bill Status downloaded successfully",
+    summary: `Records found: ${n}${extras.length ? ` (${extras.join(", ")})` : ""}`,
+    filter: summary.filter ? `Search: ${summary.filter}` : "",
+    filename: summary.filename || "",
+    downloadId: summary.downloadId ?? null,
+    preview: true
+  });
   refreshMeta();
 }
 
@@ -370,11 +401,12 @@ el.btnLoginBack.addEventListener("click", () => {
   showView("main");
   checkSession(true);
 });
-el.btnPreview.addEventListener("click", () => send(MESSAGE_TYPES.OPEN_PREVIEW));
+el.btnMainPreview.addEventListener("click", () => send(MESSAGE_TYPES.OPEN_PREVIEW));
 el.btnErrorPreview.addEventListener("click", () => send(MESSAGE_TYPES.OPEN_PREVIEW));
-el.btnShowFile.addEventListener("click", () => {
-  if (lastDownloadId !== null) chrome.downloads.show(lastDownloadId);
+el.btnMainShowFile.addEventListener("click", () => {
+  if (resultDownloadId !== null) chrome.downloads.show(resultDownloadId);
 });
+el.btnMainDismiss.addEventListener("click", hideResult);
 
 for (const radio of el.optRange) radio.addEventListener("change", updateOptionsSummary);
 el.optZone.addEventListener("change", updateOptionsSummary);
@@ -404,7 +436,7 @@ el.uploadForm.addEventListener("submit", async (event) => {
   populateUploadForm();
   updateOptionsSummary();
   refreshMeta();
-  initDocuments({ send, showView, setConnection, setConnectionForError, showLogin });
+  initDocuments({ send, showView, setConnection, setConnectionForError, showLogin, showResult, hideResult });
   initMa({ send, showView, setConnection, setConnectionForError, showLogin });
   const restored = await restoreJobState();
   const documentRestored = restored ? false : await restoreDocuments();

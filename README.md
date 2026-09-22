@@ -65,7 +65,7 @@ corrected, reconciled or inferred.
 
 | Layer | File | Responsibility |
 |---|---|---|
-| UI | `popup/popup.html`, `popup.css`, `popup.js` | Download cards (Bill Status, CRN), connection indicator, progress, results, login-required view, upload placeholder |
+| UI | `popup/popup.html`, `popup.css`, `popup.js` | Rendered in Chrome's side panel (docked right, full height; the toolbar icon toggles it). Download cards (Bill Status, CRN), connection indicator, progress, results, login-required view, upload placeholder |
 | UI (PO Search) | `popup/popup-documents.js` | Shared CRN / R-NOTE view: railway / PO / date filters, file format, progress, result |
 | Orchestration | `background/service-worker.js` | Runs the workflow, tracks job state, relays progress to the popup |
 | DOM parsing | `background/offscreen.html`, `offscreen.js` | Offscreen document that owns `DOMParser` (service workers have none) |

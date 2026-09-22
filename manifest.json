@@ -14,7 +14,8 @@
     "downloads",
     "storage",
     "tabs",
-    "offscreen"
+    "offscreen",
+    "sidePanel"
   ],
   "host_permissions": [
     "http://localhost:8765/*"
@@ -23,8 +24,10 @@
     "service_worker": "background/service-worker.js",
     "type": "module"
   },
+  "side_panel": {
+    "default_path": "popup/popup.html"
+  },
   "action": {
-    "default_popup": "popup/popup.html",
     "default_title": "DocLink - IREPS Document Automation",
     "default_icon": {
       "16": "assets/icon16.png",

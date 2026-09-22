@@ -60,17 +60,6 @@
           <p class="progress-message" id="progress-message"></p>
         </div>
 
-        <div id="result-success" class="result result-success" hidden>
-          <div class="result-title">✓ Bill Status downloaded successfully</div>
-          <p id="result-summary" class="result-text"></p>
-          <p id="result-filter" class="result-text result-muted"></p>
-          <p id="result-filename" class="result-filename"></p>
-          <div class="result-actions">
-            <button id="btn-show-file" class="btn btn-link" type="button">Show in folder</button>
-            <button id="btn-preview" class="btn btn-link" type="button">Open printable preview</button>
-          </div>
-        </div>
-
         <div id="result-error" class="result result-error" hidden>
           <div class="result-title" id="error-title"></div>
           <p id="error-message" class="result-text"></p>
@@ -103,6 +92,19 @@
         </div>
         <p class="card-text">Upload documents to the configured IREPS workflow.</p>
         <button id="btn-upload" class="btn btn-secondary" type="button">Upload Document</button>
+      </article>
+
+      <!-- Last completed download (Bill Status, CRN, R-NOTE): pinned to the bottom of the main view -->
+      <article id="main-result" class="result result-success result-panel" hidden>
+        <div class="result-title" id="main-result-title"></div>
+        <p id="main-result-summary" class="result-text"></p>
+        <p id="main-result-filter" class="result-text result-muted"></p>
+        <p id="main-result-filename" class="result-filename"></p>
+        <div class="result-actions">
+          <button id="btn-main-show-file" class="btn btn-link" type="button">Show in folder</button>
+          <button id="btn-main-preview" class="btn btn-link" type="button" hidden>Open printable preview</button>
+          <button id="btn-main-dismiss" class="btn btn-link" type="button">Dismiss</button>
+        </div>
       </article>
     </section>
 
@@ -171,16 +173,6 @@
             <li data-stage="DOWNLOADING">Downloading</li>
           </ol>
           <p class="progress-message" id="doc-progress-message"></p>
-        </div>
-
-        <div id="doc-result-success" class="result result-success" hidden>
-          <div class="result-title" id="doc-result-title">&#10003; Export downloaded successfully</div>
-          <p id="doc-result-summary" class="result-text"></p>
-          <p id="doc-result-filter" class="result-text result-muted"></p>
-          <p id="doc-result-filename" class="result-filename"></p>
-          <div class="result-actions">
-            <button id="btn-doc-show-file" class="btn btn-link" type="button">Show in folder</button>
-          </div>
         </div>
 
         <div id="doc-result-error" class="result result-error" hidden>

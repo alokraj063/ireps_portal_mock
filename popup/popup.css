@@ -38,9 +38,15 @@ body {
   padding: 0;
 }
 
+html {
+  height: 100%;
+}
+
+/* Rendered in Chrome's side panel: fill its full width and height. */
 body {
-  width: 380px;
-  min-height: 500px;
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
   font-family: var(--font);
   font-size: 13px;
   line-height: 1.45;
@@ -154,9 +160,16 @@ body {
 }
 
 .view {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Completed-download details: sits at the bottom of the main view, under the cards. */
+.result-panel {
+  margin-top: auto;
+  box-shadow: var(--shadow);
 }
 
 .card {

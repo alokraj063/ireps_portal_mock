@@ -38,7 +38,6 @@ const INTRO = {
 
 let ctx = null;
 let criteria = SEARCH_PO_CRITERIA.CRN;
-let lastDownloadId = null;
 const el = {};
 
 function bindElements() {
@@ -63,12 +62,6 @@ function bindElements() {
     stepSearch: $("doc-step-search"),
     stepParse: $("doc-step-parse"),
     progressMessage: $("doc-progress-message"),
-    resultSuccess: $("doc-result-success"),
-    resultTitle: $("doc-result-title"),
-    resultSummary: $("doc-result-summary"),
-    resultFilter: $("doc-result-filter"),
-    resultFilename: $("doc-result-filename"),
-    btnShowFile: $("btn-doc-show-file"),
     resultError: $("doc-result-error"),
     errorTitle: $("doc-error-title"),
     errorMessage: $("doc-error-message"),
@@ -162,7 +155,7 @@ function setButtonBusy(busy, label) {
 }
 
 function resetResults() {
-  el.resultSuccess.hidden = true;
+  ctx.hideResult();
   el.resultError.hidden = true;
   el.resultError.classList.remove("is-notice");
   el.btnOpenIreps.hidden = true;
@@ -184,24 +177,25 @@ function renderProgress(stageId, message) {
   if (index >= STAGE_ORDER.indexOf("CONNECTED")) ctx.setConnection("connected", "Connected");
 }
 
+/** Back to the main screen with the details in the bottom result panel. */
 function renderComplete(summary) {
-  ctx.showView("document");
   resetResults();
   el.progress.hidden = true;
+  el.options.open = false;
   setButtonBusy(false);
   ctx.setConnection("connected", "Connected");
-  lastDownloadId = summary.downloadId ?? null;
   if (summary.form && summary.form.railways) populateRailways(summary.form.railways);
   const label = typeInfo().shortLabel;
   const n = summary.recordCount ?? 0;
   const pages = summary.pagesFetched > 1 ? ` across ${summary.pagesFetched} result pages` : "";
   const fmt = (EXPORT_FORMATS.find((f) => f.value === summary.format) || EXPORT_FORMATS[0]).label;
-  el.resultTitle.textContent = `✓ ${label} export downloaded successfully`;
-  el.resultSummary.textContent = `${label} records exported: ${n}${pages} (${fmt})`;
-  el.resultFilter.textContent = summary.filter ? `Search: ${summary.filter}` : "";
-  el.resultFilename.textContent = summary.filename || "";
-  el.btnShowFile.hidden = lastDownloadId === null;
-  el.resultSuccess.hidden = false;
+  ctx.showResult({
+    title: `✓ ${label} export downloaded successfully`,
+    summary: `${label} records exported: ${n}${pages} (${fmt})`,
+    filter: summary.filter ? `Search: ${summary.filter}` : "",
+    filename: summary.filename || "",
+    downloadId: summary.downloadId ?? null
+  });
 }
 
 function renderError(error) {
@@ -246,7 +240,9 @@ async function loadForm(force = false) {
 async function openView(next) {
   applyCriteria(next);
   ctx.showView("document");
-  resetResults();
+  el.resultError.hidden = true;
+  el.resultError.classList.remove("is-notice");
+  el.btnOpenIreps.hidden = true;
   el.progress.hidden = true;
   setButtonBusy(false);
   updateOptionsSummary();
@@ -256,8 +252,6 @@ async function openView(next) {
   } else if (state && state.status === "running") {
     renderProgress(state.stage, state.message);
     return;
-  } else if (state && state.status === "complete" && state.result && Date.now() - (state.updatedAt || 0) < 10 * 60 * 1000) {
-    renderComplete(state.result);
   }
   await loadForm(false);
 }
@@ -282,7 +276,7 @@ async function startDownload(event) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * @param {{ send: Function, showView: Function, setConnection: Function, setConnectionForError: Function, showLogin: Function }} context
+ * @param {{ send: Function, showView: Function, setConnection: Function, setConnectionForError: Function, showLogin: Function, showResult: Function, hideResult: Function }} context
  */
 export function initDocuments(context) {
   ctx = context;
@@ -298,9 +292,6 @@ export function initDocuments(context) {
   el.dateTo.addEventListener("change", updateOptionsSummary);
   el.format.addEventListener("change", updateOptionsSummary);
   el.btnOpenIreps.addEventListener("click", () => ctx.send(MESSAGE_TYPES.OPEN_IREPS));
-  el.btnShowFile.addEventListener("click", () => {
-    if (lastDownloadId !== null) chrome.downloads.show(lastDownloadId);
-  });
   applyCriteria(SEARCH_PO_CRITERIA.CRN);
   updateOptionsSummary();
 }
@@ -326,8 +317,9 @@ export function handleDocumentMessage(message) {
 }
 
 /**
- * Called once at popup start-up. Restores a running or recently finished
- * CRN / R-NOTE job into the document view; returns true when it did.
+ * Called once at popup start-up. Restores a running CRN / R-NOTE job into the
+ * document view, or a recently finished one into the main view's bottom
+ * result panel; returns true when it did.
  */
 export async function restoreDocuments() {
   for (const type of SEARCH_PO_DOCUMENT_TYPES) {
