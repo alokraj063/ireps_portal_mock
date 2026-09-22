@@ -17,7 +17,11 @@
  *        -> HTML page with one <table id="table_id"> per bill
  *
  * Only application-level headers are set; Chrome adds Cookie, Origin,
- * User-Agent, Sec-Fetch-* and friends itself.
+ * User-Agent, Sec-Fetch-* and friends itself. The session is the portal's
+ * own JSESSIONID (+ F5 TS01b82797) cookie pair that the security-key login
+ * sets in the browser; DocLink never reads it, Chrome attaches it because
+ * requests are made with credentials: "include". The mock portal issues
+ * cookies of the same names and shape, so nothing here changes between them.
  *
  * Switching between the mock portal and the real portal changes ONLY
  * IREPS_CONFIG.baseUrl (and manifest host_permissions):
@@ -30,7 +34,8 @@ import { STRUTS_TOKEN_FIELD, ALL_ZONES_VALUE } from "./ireps-form.js";
 /** Base configuration. Keep every IREPS URL here. */
 export const IREPS_CONFIG = Object.freeze({
   baseUrl: "http://localhost:8765",
-  homePath: "/",
+  /** The portal's home page (captured: GET /epsn/home/showHome.do); "Open IREPS" lands here. */
+  homePath: "/epsn/home/showHome.do",
   billStatusEndpoint: "/epsn/admin/viewBills.do",
   /** Abort a request after this many milliseconds (the real page is ~7 MB). */
   timeoutMs: 120000,

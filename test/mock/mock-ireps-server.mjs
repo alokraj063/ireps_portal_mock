@@ -7,10 +7,27 @@
  * Behaves like the real portal from the extension's point of view
  * (modelled on the captured viewBills.do HAR):
  *
- *   GET  /                          mock home page with a "Login" button
- *   POST /login                     sets a MOCKSESSION cookie (simulates the
- *                                   security-key login) and redirects home
- *   GET  /logout                    clears the cookie
+ *   GET  /epsn/home/showHome.do     Bidder Home Page in the IREPS look (captured
+ *                                   layout, fictitious user) when logged in, the
+ *                                   login page otherwise; "/" is an alias
+ *   GET  /ireps/**                  the portal's real static files (stylesheet,
+ *                                   images, jQuery) from test/mock/static, so the
+ *                                   fixture pages render like IREPS
+ *   GET  /mock/                     mock-only control panel: scenarios, session tools
+ *   POST /login                     mock-only: simulates the security-key login
+ *                                   (not captured - the real one is a PKI /
+ *                                   CRISPKI flow) and sets the SAME session
+ *                                   cookies the real portal uses: JSESSIONID in
+ *                                   the WebSphere "cacheId+sessionId:clone:clone"
+ *                                   format seen in the captures, plus the F5
+ *                                   TS01b82797 cookie. Values are random; the
+ *                                   server remembers which JSESSIONIDs it issued.
+ *   GET  /epsn/home/logout.do       invalidates the session and clears the
+ *                                   cookies (captured logout link; "/logout" alias)
+ *   GET  /mock/session/expire       invalidates every session server-side but
+ *                                   leaves the browser cookie in place - the real
+ *                                   "session timed out" case: the cookie is still
+ *                                   sent, the portal answers with the login page
  *   POST /epsn/admin/viewBills.do   empty body  -> Bill Status page with the
  *                                   vendorPartyCodeForm, a FRESH fake Struts
  *                                   token, the zone list, searchRange radios,
@@ -52,8 +69,9 @@
  *   popup's "today" default finds some; PO links go to /mock/po/<PO>.pdf and
  *   MA links (title="View/Download MA") to /mock/ma/<PO>_<MA>.pdf.
  *
- * Without the cookie the portal answers with the login page (HTTP 200,
- * like many Struts applications) unless a scenario overrides it.
+ * Without a JSESSIONID this server issued (no cookie, or an expired one) the
+ * portal answers with the login page (HTTP 200, like many Struts applications)
+ * unless a scenario overrides it.
  *
  * Scenario override (open in any tab, or curl):
  *
@@ -73,22 +91,26 @@
  *   GET /mock/scenario/crn-large      300 generated CRNs / 120 R-NOTEs / 200 MAs in one response
  *   GET /mock/scenario/ma-pdf-login   every MA/PO PDF URL answers with the login page (session expired mid-download)
  *   GET /mock/scenario/ma-pdf-404     every MA/PO PDF URL answers HTTP 404
- *   GET /mock/status                  current scenario (JSON)
+ *   GET /mock/status                  current scenario + live session count (JSON)
  *
- * No real session cookie, token or business data is used anywhere here.
+ * No real session cookie, token or business data is used anywhere here: the
+ * JSESSIONID values are random and only mimic the real cookie's shape.
  */
 
 import { createServer } from "node:http";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { randomBytes } from "node:crypto";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixtures = join(here, "..", "fixtures");
+/** Real IREPS static files (stylesheets, images, jQuery) served at their portal paths so mock pages look like the portal. */
+const staticRoot = join(here, "static");
 const PORT = Number(process.env.PORT || 8765);
 
 const pages = {
+  home: readFileSync(join(fixtures, "home-page.html"), "utf8"),
   billPage: readFileSync(join(fixtures, "bill-status-page.html"), "utf8"),
   legacy: readFileSync(join(fixtures, "bill-status-sample.html"), "utf8"),
   login: readFileSync(join(fixtures, "login-page.html"), "utf8"),
@@ -114,6 +136,60 @@ for (const m of pages.billPage.matchAll(/<option value="([^"]+)">([^<]+)<\/optio
 let scenario = "auto";
 /** The portal keeps the last searchCriteria server-side; page links post without it. */
 let lastSearchCriteria = "CRN";
+
+/* -------------------------------------------------------------------------- */
+/* Session cookies (same names and shape as the real portal)                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The captures show two cookies on every authenticated request:
+ *   JSESSIONID=0003gdeFyvROQQGUoP7WKy_ddfs:1886tt34a:1886tsaig   (WebSphere:
+ *     4-digit cache id + 23-char session id + ":cloneId:cloneId")
+ *   TS01b82797=01ee28b444...                                      (F5 BIG-IP)
+ * The mock issues cookies of exactly that shape (random values) so DocLink
+ * and the mock exchange the same session the real portal would.
+ */
+const SESSION_COOKIE = "JSESSIONID";
+const LB_COOKIE = "TS01b82797";
+const CLONE_IDS = ["1886tsaig", "1886tt34a", "1886tujvp"];
+/** JSESSIONID values this server issued and has not invalidated. */
+const liveSessions = new Set();
+
+function base64UrlId(bytes) {
+  return randomBytes(bytes).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function issueSession() {
+  const cacheId = String(Math.floor(Math.random() * 6)).padStart(4, "0");
+  const sessionId = base64UrlId(17).slice(0, 23);
+  const clones = [...CLONE_IDS].sort(() => Math.random() - 0.5).slice(0, 2);
+  const value = `${cacheId}${sessionId}:${clones[0]}:${clones[1]}`;
+  liveSessions.add(value);
+  return value;
+}
+
+function parseCookies(req) {
+  const out = new Map();
+  for (const part of String(req.headers.cookie || "").split(";")) {
+    const i = part.indexOf("=");
+    if (i > 0) out.set(part.slice(0, i).trim(), part.slice(i + 1).trim());
+  }
+  return out;
+}
+
+/** Logged in = the request carries a JSESSIONID this server issued and has not expired. */
+function hasSession(req) {
+  const id = parseCookies(req).get(SESSION_COOKIE);
+  return Boolean(id && liveSessions.has(id));
+}
+
+function sessionCookies(value) {
+  return [`${SESSION_COOKIE}=${value}; Path=/; HttpOnly`, `${LB_COOKIE}=01${randomBytes(30).toString("hex")}; Path=/`];
+}
+
+function clearedSessionCookies() {
+  return [`${SESSION_COOKIE}=; Path=/; Max-Age=0`, `${LB_COOKIE}=; Path=/; Max-Age=0`];
+}
 
 /* -------------------------------------------------------------------------- */
 /* Struts-like single-use tokens                                              */
@@ -746,13 +822,13 @@ function tinyPdf(lines) {
 /* HTTP                                                                       */
 /* -------------------------------------------------------------------------- */
 
+/** The real pages carry this inline; the sanitised fixtures do not, so the mock adds it for the IREPS look (DocLink never reads styles). */
+const HEADER_STYLE = "<style>.gradientClass{background:#0073B0;background:linear-gradient(to right,#0b3d91 0%,#0073B0 60%,#1e88c7 100%);}</style>";
+
 function html(res, status, body, headers = {}) {
+  if (typeof body === "string" && body.includes('class="gradientClass"') && !body.includes(".gradientClass{")) body = body.replace(/<head>/i, `<head>${HEADER_STYLE}`);
   res.writeHead(status, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", ...headers });
   res.end(body);
-}
-
-function hasSession(req) {
-  return /(?:^|;\s*)MOCKSESSION=/.test(req.headers.cookie || "");
 }
 
 function readBody(req) {
@@ -765,51 +841,120 @@ function readBody(req) {
   });
 }
 
+const SCENARIOS = ["auto", "bills", "large", "login", "redirect-login", "expired", "no-records", "token-missing", "token-invalid", "http500", "slow", "legacy"];
+const CRN_SCENARIOS = ["crn-paged", "crn-large", "ma-pdf-login", "ma-pdf-404"];
+const MOCK_USER = "MOCK USER, SAMPLE RAIL COMPONENTS PRIVATE LIMITED-UNIT 1 (IREPS ID-&nbsp;833)";
+
+/** The scenario notice shown on every mock page while a test scenario other than "auto" is active. */
+function scenarioNotice() {
+  if (scenario === "auto") return "";
+  return `<div class="mockNotice warn">&#9888; Test scenario <b>${scenario}</b> is active: IREPS pages are answering abnormally on purpose (DocLink error testing). <a href="/mock/scenario/auto">Switch back to normal (auto)</a></div>`;
+}
+
+/** Left-menu block in the style of the captured Bidder Home Page. */
+function menuSection(title, links) {
+  const rows = links.map(([href, text]) => `<tr><td width="10px;"><li style="list-style-type:square;"></li></td><td><a href="${href}" title="${text}" class="linkStyle">${text}</a></td></tr>`).join("");
+  return `<tr><td width="212" height="26" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="5" class="bg_white"><tr><td width="356" valign="top" class="fontSet1" height="26">${title}</td></tr></table></td></tr>
+<tr><td valign="top" class="boxStyle1"><table width="100%" class="nit_summary1" cellspacing="0" cellpadding="0">${rows}</table></td></tr>
+<tr><td width="212" height="26" valign="top">&nbsp;</td></tr>`;
+}
+
+/** Bidder Home Page (logged in) or the login page (logged out), IREPS look. */
 function homePage(loggedIn) {
-  return `<!DOCTYPE html><html><head><title>Mock IREPS</title>
-  <style>body{font-family:sans-serif;max-width:640px;margin:40px auto;color:#1c2430}button{font:inherit;padding:10px 18px;border-radius:8px;border:1px solid #124a8c;background:#124a8c;color:#fff;cursor:pointer}a{color:#124a8c}code{background:#eef2f7;padding:2px 5px;border-radius:4px}</style></head>
+  if (!loggedIn) return pages.login.replace('<div class="mockLoginBox">', `${scenarioNotice()}<div class="mockLoginBox">`);
+  const main = `
+<table width="100%" border="0" cellpadding="0" cellspacing="0"><tr>
+  <td width="230" valign="top">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0">
+      ${menuSection("Documents", [["/epsn/works/docrepository.do?activity=display", "Upload/View My Documents"], ["/epsn/works/irepsDocuments.do?activity=display", "View IREPS Documents"]])}
+      ${menuSection("Pending Bills", [["/epsn/admin/vendorPartyCode.do", "Map Accounts Deptt Party Code"], ["/epsn/admin/viewBills.do", "View Bills Status"]])}
+      ${menuSection("Contracts", [["/epsn/searchPO.do?searchParam=showPage", "View &amp; Manage Contracts"]])}
+    </table>
+  </td>
+  <td valign="top" style="padding-left:20px;">
+    <div class="mockNotice ok">&#10003; Logged in &mdash; the browser now holds the portal's <code>JSESSIONID</code> session cookie (mock value). DocLink shows <b>IREPS &#9679; Connected</b>.</div>
+    <fieldset class="fieldsetStyle"><legend class="legendStyle">DocLink workflows start here</legend>
+      <table cellpadding="4">
+        <tr><td class="formLabel">Bill Status</td><td><a class="linkStyle" href="/epsn/admin/viewBills.do">View Bills Status</a> &rarr; <code>POST /epsn/admin/viewBills.do</code></td></tr>
+        <tr><td class="formLabel">CRN / R-NOTE / MA</td><td><a class="linkStyle" href="/epsn/searchPO.do?searchParam=showPage">View &amp; Manage Contracts (PO Search)</a> &rarr; <code>POST /epsn/searchPO.do</code></td></tr>
+      </table>
+    </fieldset>
+  </td>
+</tr></table>`;
+  return pages.home
+    .replace("<!--MOCK:WELCOME-->", MOCK_USER)
+    .replace("<!--MOCK:TOPLINK-->", '<a href="/epsn/home/logout.do" style="color:white;font-weight:bold" title="Logout">Logout</a>')
+    .replace("<!--MOCK:NOTICE-->", scenarioNotice())
+    .replace("<!--MOCK:MAIN-->", main);
+}
+
+/** Mock-only control panel: scenarios and session tools (kept off the portal-look pages so they are not clicked by accident). */
+function controlPanel(loggedIn) {
+  const links = (list) => list.map((x) => `<a href="/mock/scenario/${x}"${x === scenario ? ' style="font-weight:bold;background:#fff4dc"' : ""}>${x}</a>`).join(" &middot; ");
+  return `<!DOCTYPE html><html><head><title>Mock IREPS - control panel</title>
+  <style>body{font-family:sans-serif;max-width:720px;margin:40px auto;color:#1c2430}a{color:#124a8c}code{background:#eef2f7;padding:2px 5px;border-radius:4px}.warn{background:#fff4dc;border:1px solid #9a6200;padding:8px 12px;border-radius:6px}</style></head>
   <body>
-  <h1>Mock IREPS portal</h1>
-  <p>This is a local stand-in for www.ireps.gov.in used to test DocLink.</p>
-  <p>Status: <strong>${loggedIn ? "Logged in (MOCKSESSION cookie set)" : "Logged out"}</strong> &middot; Scenario: <code>${scenario}</code></p>
-  ${
-    loggedIn
-      ? `<p><a href="/epsn/admin/viewBills.do">View Bills</a> &middot; <a href="/epsn/searchPO.do">PO Search (CRN)</a> &middot; <a href="/logout">Logout</a></p>`
-      : `<form method="post" action="/login"><button type="submit">Login with security key (simulated)</button></form>`
-  }
-  <h3>Scenarios</h3>
-  <p>${["auto", "bills", "large", "login", "redirect-login", "expired", "no-records", "token-missing", "token-invalid", "http500", "slow", "legacy"]
-    .map((s) => `<a href="/mock/scenario/${s}">${s}</a>`)
-    .join(" &middot; ")}</p>
-  <h3>CRN scenarios</h3>
-  <p>${["crn-paged", "crn-large", "ma-pdf-login", "ma-pdf-404"]
-    .map((s) => `<a href="/mock/scenario/${s}">${s}</a>`)
-    .join(" &middot; ")} &middot; <a href="/mock/scenario/auto">back to auto</a></p>
+  <h1>Mock IREPS &mdash; control panel</h1>
+  <p><a href="/epsn/home/showHome.do">&larr; Back to the mock portal</a></p>
+  <p>Session: <strong>${loggedIn ? "logged in" : "logged out"}</strong> &middot; live sessions: ${liveSessions.size} &middot; scenario: <code>${scenario}</code></p>
+  ${scenario === "auto" ? "" : '<p class="warn">A test scenario is active: portal pages answer abnormally on purpose. <a href="/mock/scenario/auto">back to auto</a></p>'}
+  <h3>Session tools</h3>
+  <p>${loggedIn ? '<a href="/epsn/home/logout.do">Logout</a> &middot; <a href="/mock/session/expire">Expire session server-side (browser keeps the cookie)</a>' : '<form method="post" action="/login" style="display:inline"><button type="submit">Login with security key (simulated)</button></form>'}</p>
+  <h3>Bill Status scenarios (for DocLink error testing)</h3>
+  <p>${links(SCENARIOS)}</p>
+  <h3>CRN / MA scenarios</h3>
+  <p>${links(CRN_SCENARIOS)} &middot; <a href="/mock/scenario/auto">back to auto</a></p>
+  <p><a href="/mock/status">/mock/status</a> (JSON)</p>
   </body></html>`;
+}
+
+const STATIC_TYPES = { ".css": "text/css", ".js": "application/javascript", ".gif": "image/gif", ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon" };
+
+/** Serve a real IREPS static file (test/mock/static) at its portal path; false when not one of ours. */
+function serveStatic(path, res) {
+  if (!path.startsWith("/ireps/")) return false;
+  const rel = decodeURIComponent(path).replace(/\.\.+/g, "");
+  const file = join(staticRoot, rel);
+  const ext = rel.slice(rel.lastIndexOf("."));
+  if (!file.startsWith(staticRoot) || !STATIC_TYPES[ext] || !existsSync(file) || !statSync(file).isFile()) return false;
+  res.writeHead(200, { "Content-Type": STATIC_TYPES[ext], "Cache-Control": "max-age=3600" });
+  res.end(readFileSync(file));
+  return true;
 }
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const path = url.pathname;
 
-  if (path === "/") return html(res, 200, homePage(hasSession(req)));
+  if (path === "/" || path === "/epsn/home/showHome.do") return html(res, 200, homePage(hasSession(req)));
+  if (path === "/mock" || path === "/mock/") return html(res, 200, controlPanel(hasSession(req)));
+  if (serveStatic(path, res)) return;
 
   if (path === "/login" && req.method === "POST") {
-    return html(res, 302, "", { "Set-Cookie": "MOCKSESSION=mock-session-value; Path=/; HttpOnly", Location: "/" });
+    const id = issueSession();
+    console.log(`[mock-ireps] login -> JSESSIONID issued (live sessions: ${liveSessions.size})`);
+    return html(res, 302, "", { "Set-Cookie": sessionCookies(id), Location: "/epsn/home/showHome.do" });
   }
-  if (path === "/logout") {
-    return html(res, 302, "", { "Set-Cookie": "MOCKSESSION=; Path=/; Max-Age=0", Location: "/" });
+  if (path === "/logout" || path === "/epsn/home/logout.do") {
+    liveSessions.delete(parseCookies(req).get(SESSION_COOKIE));
+    console.log(`[mock-ireps] logout (live sessions: ${liveSessions.size})`);
+    return html(res, 302, "", { "Set-Cookie": clearedSessionCookies(), Location: "/epsn/home/showHome.do" });
   }
-  if (path === "/epsn/login.do") return html(res, 200, pages.login);
+  if (path === "/mock/session/expire") {
+    liveSessions.clear();
+    console.log("[mock-ireps] all sessions expired server-side (browser cookies untouched)");
+    return html(res, 302, "", { Location: "/epsn/home/showHome.do" });
+  }
+  if (path === "/epsn/login.do") return html(res, 200, homePage(false));
 
   if (path.startsWith("/mock/scenario/")) {
     scenario = path.split("/").pop();
     console.log(`[mock-ireps] scenario -> ${scenario}`);
-    return html(res, 302, "", { Location: "/" });
+    return html(res, 302, "", { Location: "/mock/" });
   }
   if (path === "/mock/status") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ scenario, issuedTokens: issuedTokens.length }));
+    return res.end(JSON.stringify({ scenario, issuedTokens: issuedTokens.length, liveSessions: liveSessions.size, sessionCookie: SESSION_COOKIE }));
   }
 
   if (path === "/epsn/admin/viewBills.do") {

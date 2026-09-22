@@ -408,7 +408,14 @@ You can also open `test/run-tests.html` in Chrome started with
 `test/mock/mock-ireps-server.mjs` is a local stand-in for the portal. It
 serves the same path (`/epsn/admin/viewBills.do`), issues a fresh fake Struts
 token per page, requires the exact form fields on the search POST (single-use
-token), uses a cookie to simulate the security-key login, and can be switched
+token), simulates the security-key login by issuing the portal's own session
+cookies (`JSESSIONID` in the WebSphere format seen in the captures, plus the F5
+`TS01b82797` cookie; values random, tracked server-side), serves the captured
+home / logout paths (`/epsn/home/showHome.do`, `/epsn/home/logout.do`), renders its
+pages in the IREPS look (the portal's real stylesheet, images and jQuery are served
+from `test/mock/static/` at their portal paths; the Bidder Home Page and login page
+are modelled on the captured layout with fictitious data), keeps its test scenarios
+on a separate control panel (`/mock/`), and can be switched
 between scenarios (`auto`, `bills`, `large`, `login`, `redirect-login`,
 `expired`, `no-records`, `token-missing`, `token-invalid`, `http500`, `slow`,
 `legacy`) from its home page.

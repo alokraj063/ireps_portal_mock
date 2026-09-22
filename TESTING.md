@@ -97,7 +97,10 @@ The mock portal serves the same page path as IREPS
 (`/epsn/admin/viewBills.do`), answers the empty POST with the Bill Status
 form and a fresh fake Struts token, validates the "Show Results" POST exactly
 like the real form (all seven fields, single-use token, date rules), simulates
-the security-key login with a cookie, and can be switched to different
+the security-key login by issuing the same `JSESSIONID` (+ F5 `TS01b82797`)
+cookies the real portal sets (random values, remembered server-side; a cookie it
+did not issue, or one expired via `/mock/session/expire`, gets the login page
+like the real portal), and can be switched to different
 scenarios from its home page.
 
 ### C1. Start the mock portal
@@ -131,7 +134,8 @@ Then go to `chrome://extensions` and click **reload** on DocLink.
 
 ### C3. Test: logged out (Acceptance Test 2)
 
-1. Open a new tab at http://localhost:8765/ — it shows "Logged out".
+1. Open a new tab at http://localhost:8765/ — it shows the IREPS-style login page
+   (User Id / Password are decorative; the real portal uses a security key).
 2. Click the DocLink toolbar icon.
 3. Header should show **IREPS ● Login Required**.
 4. Click **Download Bill Status**.
@@ -144,8 +148,11 @@ Expected:
 
 ### C4. Test: logged in, successful download (Acceptance Test 1)
 
-1. On the mock home page click **Login with security key (simulated)**.
-   The page now shows "Logged in".
+1. On the mock login page click **Login with security key (simulated)**.
+   The Bidder Home Page opens (IREPS look: header, left menu with **View Bills
+   Status** and **View & Manage Contracts**) with a green "Logged in" notice. The browser now
+   holds a `JSESSIONID` cookie shaped like the real portal's; DocLink never
+   reads it, Chrome attaches it to every DocLink request.
 2. Open DocLink. Header shows **IREPS ● Connected**.
 3. Click **Download Bill Status**.
 
@@ -191,7 +198,8 @@ overwritten. (Two downloads within the same second get " (1)" appended.)
 
 ### C6. Test: other scenarios (Acceptance Tests 3, 4, 5)
 
-On the mock home page, click a scenario link, then open DocLink and click
+Open the mock control panel at http://localhost:8765/mock/ (also linked from the
+foot of every mock page), click a scenario link, then open DocLink and click
 **Download Bill Status** (or **Try again**).
 
 | Scenario link | Expected popup result | PDF created? |
@@ -207,6 +215,7 @@ On the mock home page, click a scenario link, then open DocLink and click
 | `slow` | Progress stays on "Retrieving Bill Status…" about 6 seconds, then completes | Yes |
 | `legacy` | Old single-table layout still downloads (3 records) | Yes |
 | `auto` | Back to normal cookie-driven behaviour | — |
+| `/mock/session/expire` (link on the home page) | Session timed out server-side while the browser still holds the cookie: **IREPS login required** view; log in again on the mock to continue | No |
 
 Network failure: stop the mock server with **Ctrl+C** in Terminal 1, then
 click Download. Expected: **Unable to retrieve Bill Status** — "…(IREPS could

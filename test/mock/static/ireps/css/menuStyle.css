@@ -1,0 +1,123 @@
+/* =Styles for the lab
+-------------------------------------------------------------- */
+#wrapper {
+	/*background-color:#0073B0;  /* Changed by trivendra jain for ireps new design */
+	background:linear-gradient(to bottom, #0099cc, #009ed6);
+	width:100%;
+	height:30px;
+	
+}
+ul#mainNav{
+    list-style-type:none;
+    list-style:none;
+    margin:0;
+    padding:0;
+	
+}
+ul#mainNav li {
+	background-color:#D75125;  /* Change By trivendra jain for ireps new design */
+    display:inline-block;
+    position:relative;
+	font-weight:bold;
+	border-radius: 0px;
+	width:120px;
+	float:left;
+	margin-left:2px;
+	
+}
+
+/* sub navigation */
+ul#mainNav li ul {    
+    background-color:#9ACFC7;
+    position:absolute;
+    left:0;
+    top:22px; /* make this equal to the line-height of the links (specified below) */
+    width:200px;
+	border: solid 1px #4D817A;
+
+}
+ul#mainNav li li {
+    position:relative;
+    margin:0;
+    display:block;
+	width:100%;
+	background-color:#f4fbfe;
+}
+ul#mainNav li li li{
+    position:relative;
+    margin:0;
+    display:block;
+	width:100%;
+}
+ul#mainNav li li ul {
+    position:absolute;
+    top:0;
+    left:200px; /* make this equal to the width of the sub nav above */
+    margin:0;
+}
+/* style all links */
+ul#mainNav a {
+    line-height:22px;
+    padding:0 32px;
+    margin:0 12px;
+	color:white;                     /* Change By trivendra jain for ireps new design */
+    text-decoration:none;
+    display:block;
+}
+
+/* style sub level links */
+ul#mainNav li li  a{
+    border-bottom-width:1px;
+    border-bottom-style:solid;
+    border-bottom-color:#dedede;
+    margin:0;
+    padding:0;
+	padding-left:10px;
+	color:#000000;
+}
+ul#mainNav li:last-child a:last-child{
+   margin-bottom:0px;
+} 
+/* hide sub menu links */
+ul#mainNav.sub-menu {
+    display:none;
+	z-index:10;
+}
+ul#mainNav div.sub-menu {
+   z-index:10;
+   padding-left: 10px;
+   padding-right: 10px;
+}
+ul#mainNav div.sub-menu a{
+   width:100%;
+}
+/* show arrows for dropdowns */
+ul#mainNav  li.dropdown > a {
+    /*background-image:url('../img/arrow-down.png');*/
+    background-image:url('../');
+    background-position:right 11px;
+    background-repeat:no-repeat;
+}
+ul#mainNav  li li.slidedown > a {
+    background-image:url('../img/arrow-down.png');
+    background-image:url('../');
+    background-position:right 11px;
+    background-repeat:no-repeat;
+
+}
+ul#mainNav  li li.dropdown > a {
+    background-image:url('../img/arrow-right.png');
+    background-position:right 8px;
+    background-repeat:no-repeat;
+	                               / * Change By trivendra Jain for ireps new design  */  
+}
+}
+/*ul#mainNav li.dropdown:hover,ul#mainNav li.no-dropdown:hover{
+    background-color:#339999;
+    
+}
+ul#mainNav li.slidedown a.no-dropdown:hover{
+  background-color:#339999;
+ 
+}
+*/

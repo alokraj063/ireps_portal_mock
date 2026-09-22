@@ -1,0 +1,818 @@
+* { 
+padding : 0;
+margin : 0;
+} 
+
+form {
+	margin: 0px;
+}
+
+.innerFormLabel
+{
+	bgcolor:#4D817A
+}
+
+.titleStyle {    /*tile*/
+	
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	font-weight: bold;
+	color: #4D817A; 
+	/*background-color: #008AD5;          /* Change By trivendra Jain for new design */
+	background:linear-gradient(to bottom, #0099cc, #009ed6);
+	text-align: left;
+	vertical-align: middle;
+}
+ 
+ 
+.titleStyle1 {    /*tile*/
+	background-image: url(/ireps/images/common/imagesCA0NCR91.jpg);
+	background-position:left center; 
+	background-repeat:no-repeat;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	font-weight: bold;
+	color: #FFFFFF;  
+	text-align: center; 
+	vertical-align: top;
+}  
+
+.titleStyle2{
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	font-weight: bold;
+	color: #4D817A; 
+	text-align: left;
+	vertical-align: middle;	
+}
+.bg_white{
+  background-color: #FFFFF; 
+}
+
+.fontSet1{
+
+   font-size:20px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight: bold;
+   font-style:normal;
+   color: #337AB7;
+   text-align: left;
+   vertical-align: middle;
+   padding-top:5px;
+
+	
+}
+
+/*
+.titleBottom {  
+	background-image: url(/ireps/images/common/tile_bot.gif);
+	background-repeat: repeat-x;
+}
+
+#topLeft { 
+width: 24px;
+height: 26px;
+background: transparent url("/ireps/images/common/left.gif") no-repeat top left;
+}
+
+#topRight {
+width: 22px;
+height: 26px;
+background: transparent url("/ireps/images/common/right.gif") no-repeat top left;
+}
+
+#botLeft {
+width: 27px;
+height: 19px;
+background: transparent url("/ireps/images/common/left_bot.gif") no-repeat top left;
+}
+
+#botRight {
+width: 22px;
+height: 19px;
+background: transparent url("/ireps/images/common/right_bot.gif") no-repeat top left;
+}*/
+
+.footer {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	font-weight: normal;
+	background-color: #0073B0;        /* Change By Trivendra jain for new Design*/
+	vertical-align: middle;
+	/*border-top-width: 100%;
+	border-top-style: solid;
+	border-top-color: #FFFFFF;*/
+}
+.footer1 {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	font-weight: normal;
+	background-color: #C0C0C0;
+	vertical-align: middle;
+	/*border-top-width: 100%;
+	border-top-style: solid;
+	border-top-color: #FFFFFF;*/
+}
+.footer2 {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	font-weight: normal;
+	background-color: #E6FAF9;
+	vertical-align: middle;
+	/*border-top-width: 100%;
+	border-top-style: solid;
+	border-top-color: #FFFFFF;*/
+}
+/*beena*/
+.footer3 {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	font-weight: normal;
+	background-color: #D5E8E7;
+	vertical-align: middle;
+	
+}
+.footer td a{  
+	color: #FFFFFF;
+	vertical-align: middle;
+	font-weight: bold;
+}
+
+.footerZones {  
+	background-color: #4D817A;
+	vertical-align: middle;
+}
+.footerZones td {
+	width: 75px;
+	border-right-width: thin;
+	border-right-style: solid;
+	border-right-color: #FFFFFF;
+	text-align: center;
+}
+.footerZones td a {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-weight: bold;
+	color: #FFFFFF;
+	vertical-align: middle;
+}
+
+.topStrip {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	font-weight: normal;
+	/*background-color: #0073B0;	 /* change By trivendra jain for Header Footer Color */
+	background :linear-gradient(to bottom, #0099cc, #009ed6);
+	vertical-align: middle;
+}
+.topStrip td a {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-weight: bold;
+	color: #FFFFFF;	
+	vertical-align: middle;
+}
+
+.boxStyle {   /*box*/
+	border: 1px solid #4D817A;
+	background-color: #F5F9F8;
+}
+.boxStyle1 {   /*box*/
+	border: 1px solid #efeaea;
+	background-color: #FFFFFF;
+}
+.dataTable {
+	border-color: 1px solid #4D817A;
+}
+
+.alternateTrStyle {  /*nit*/
+	background-color: #F5F5F5;
+	margin: 10px;
+}
+a.linkStyle:link {      /*links a,footer a,railLinks a, */
+	font-family: Verdana, sans-serif;
+	font-size: 12px;
+	font-weight: normal;
+	color: black;                       /* Change by trivendra jain for ireps new design  */
+	text-decoration: none;
+}
+a.linkStyle:hover {  /*footer a:hover*/
+	font-family: Verdana, sans-serif;
+	font-size: 12px;
+	font-weight: normal;
+	color: black;
+	text-decoration: none;
+}
+
+a.linkStyle:visited  {
+	font-family:Verdana, sans-serif;;
+	font-size: 12px;
+	font-weight: normal;
+	color: black;;
+	text-decoration: none;
+}
+
+a.linkStyle:active  {
+	font-family: Arial;
+	font-size: 12px;
+	font-weight: bold;
+	color: black;
+	text-decoration: none;
+}
+/*
+.buttonStyle {
+	CLEAR: none; BORDER-RIGHT: #9a9a9a 1px; PADDING-RIGHT: 5px; BORDER-TOP: #9a9a9a 1px solid; PADDING-LEFT: 5px; FONT-WEIGHT: bold; FONT-SIZE: 10px; FLOAT: left; MARGIN: 0px; VERTICAL-ALIGN: middle; BORDER-LEFT: #9a9a9a 1px solid; WIDTH: auto; COLOR: #000000; PADDING-TOP: 5px; BORDER-BOTTOM: #9a9a9a 1px; FONT-FAMILY: Arial, Helvetica, sans-serif; HEIGHT: 20px; BACKGROUND-COLOR: #f0f4f5; TEXT-ALIGN: center
+}*/
+.formLabel
+{
+   font-size:11px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   color: #25383C;
+   font-weight: bold;
+   border-color: black;
+}
+.formLabelLease
+{
+   font-size:13px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   color: #25383C;
+   /* font-weight: bold; */
+   border-color: black;
+}
+.formLabel_publish
+{
+   font-size:14px;
+   font-family: Cambria;
+   padding-left:5px;
+   color: #000000;
+   background-color: #F1F1F1;
+   border-color: black;
+}
+.epsLabel        /* Change By Trivendra Jain For IREPS NEW Design */
+{
+	font-size:33px;     
+	font-family: Cambria;
+	font-weight: normal;
+	letter-spacing: 2px;
+	color: #3C645F; 
+}
+.epsLabel1
+{
+	font-size:25px;
+	font-family:"Callibri";
+	font-weight: normal;
+	letter-spacing: 2px;
+	color: #3C645F;
+}
+.welcomeLabel
+{
+   font-size:11px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight: bold;
+   color: #FFFFFF;
+}
+/*------------------Code added by Sakthivel.M_15.05---------------------------*/
+.buttonStyle
+{
+   font-size:11px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight:bold;
+   /*width:100px;*/
+  /*  height:25px;
+   border-bottom-style:solid;
+   border-left-style:solid;
+   border-right-style:solid; */
+  
+    border-width: 1px;
+    border-style: solid;
+ 	 /*   border-color: -moz-use-text-color; */
+  	border-color:black;
+    border-radius: 3px;
+    padding: 5px;
+    background-color: #E3E8ED;
+    
+   
+}
+/*------------------Code added by Sakthivel.M_15.05---------------------------*/
+.listStyle {
+display:block; 
+float:left; 
+border: 0; 
+font-family: Verdana, Arial, Helvetica, sans-serif;
+text-align: left;
+font-size: 10px;
+/*background-color: #F5FCFF; 
+color: blue;*/
+}  
+
+.tAreaStyle {
+display:block; 
+float:left; 
+width:180; 
+/*background-color: navy;*/
+/*border: black 1px solid;*/
+/*border-color:#336699;*/ 
+font-weight:normal; 
+font-family: Verdana, Arial, Helvetica, sans-serif;
+font-size: 11px;
+color: #25383C;
+font-weight: normal
+}  
+
+.textBoxStyle {
+display:block; 
+float:left; 
+width:140;
+height:20; 
+/*background-color: #99ccff;*/
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size: 12px; 
+font-weight:normal; 
+border-color:#336699; 
+border-style:inset;
+color: #25383C;
+border-width:1px; 
+padding-left:5px;    /* Changes By Saket For IREPS NEW DESIGN */
+}  
+
+.radioStyle {
+display:block; 
+float:left; 
+width:20; 
+font-family: Verdana, Arial, Helvetica, sans-serif;
+font-size: 10px;
+color: #000000
+}  
+
+.checkBoxStyle {
+ font-size:12px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   color: #25383C;
+}  
+
+.errorStyle {
+display:block;
+float:left; 
+width:100%;
+color :#C00000;
+font-size :14px;
+font-family: Verdana, Arial, Helvetica, sans-serif; 
+}  
+/*Used in Styles.css but not in IrepsCommonCss*/
+body,td,th {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	/* font-size: 11px;
+	color: #4D817A; */
+	font-size: 12px;
+	color: #25383C;  
+}
+td a { 
+color : #336699;
+text-decoration : none;
+} 
+td a:hover { 
+color : #8eb88f;
+} 
+.table_bg {
+	background-color: #F5F9F8;
+}
+.table_head {
+	background-color: #DAEEF3;
+}
+.nit_summary {
+	background-color: #F2F2F2;	 /* Change By Trivendra jain for ireps new design */
+}
+.nit_summary1 {
+	background-color: #FFFFFF;	 /* Change By Abrol sir for ireps new design */
+}
+.nit_summary1 li:hover {
+	background-color:#fff8f2;	 /* Change By Abrol sir for ireps new design */
+}
+.nit_summary1 tr:hover {
+	background-color:#fff8f2;	 /* Change By Abrol sir for ireps new design */
+}
+.nit_summary1 td {
+	padding: 5px;
+}
+.nit_summary  td {
+	padding: 5px;
+}
+.latestTenders {
+	background-color: #FFFFFF;	
+}
+.languageBar {
+	background-color: #E6FAF9;	
+}
+.languageBar a {
+	color: #FFFFFF;	
+}
+
+.table_br {
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-style: solid;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-top-color: #9ACFC7;
+	border-right-color: #9ACFC7;
+	border-bottom-color: #9ACFC7;
+	border-left-color: #9ACFC7;
+}
+.header {
+	font-family: "Tw Cen MT Condensed";	
+}
+.heading {
+	font-size:12px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-style:italic;
+   color: white;
+   padding-top:5px;
+}
+.advSearch {
+	background-color: #FAFCFE;
+	border: 1px solid #BBD5E8;
+	margin: 10px;
+}
+
+body {
+	background-color: #F2F2F2;       /*Change By trivendra jain for ireps new design */
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	background-repeat: repeat-x;
+}
+
+
+.textBoxStyleForLocal {
+display:block; 
+float:left; 
+height:20;
+/*background-color: #99ccff;*/
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size: 12px; 
+font-weight:normal; 
+border-color:336699; 
+border-style:inset; 
+border-width:1px; 
+}  
+
+.tAreaStyleForLocal {
+display:block; 
+float:left; 
+/*background-color: navy;*/
+border: black 1px solid;
+border-color:336699; 
+font-weight:normal; 
+font-family: Verdana, Arial, Helvetica, sans-serif;
+font-size: 10px;
+font-weight: normal
+} 
+
+.passwordStyle {
+display:block; 
+float:left; 
+height:20;
+/*background-color: #99ccff;*/
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size: 12px; 
+font-weight:normal; 
+border-color:336699; 
+border-style:inset; 
+border-width:1px; 
+} 
+
+.emailStyle {
+display:block; 
+float:left; 
+height:20;
+/*background-color: #99ccff;*/
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size: 12px; 
+font-weight:normal; 
+border-color:336699; 
+border-style:inset; 
+border-width:1px; 
+} 
+
+.urlStyle {
+display:block; 
+float:left; 
+height:20;
+/*background-color: #99ccff;*/
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size: 12px; 
+font-weight:normal; 
+border-color:336699; 
+border-style:inset; 
+border-width:1px; 
+} 
+
+.railLinks {
+ font-family: Cambria;
+ font-size: 14px;
+ font-weight: normal;
+ text-align : justify;
+ color: black;
+}
+
+.railLinksHI {
+ /*font-family: Verdana, Arial, Helvetica, sans-serif;*/
+  font-family: Cambria;
+ font-size: 14px;
+ font-size: 14px;
+ font-weight: normal;
+ text-align : justify;
+ color:#D75125;
+}
+
+.optionColor {
+ color: brown;
+ font-weight: bold;
+}
+
+/*------------------Code added by Sakthivel.M_15.05---------------------------*/
+.comboStyle
+{
+   font-size:12px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   color: #25383C;
+}
+.dataText
+{
+   font-size:12px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   /*color: #346679;*/
+   color: #25383C;
+   border-color: black;
+}
+.dataTextLease
+{
+   font-size:14px;
+   font-family:Calibri, Verdana, Arial, Helvetica, sans-serif;
+   /*color: #346679;*/
+   color: #25383C;
+   border-color: black;
+}
+.breadcrumb
+{
+   font-size:11px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   color: #7F5A58;
+   font-weight: bold;
+}
+.nitprocessmsg
+{
+color: #C34A2C;
+font-size: 12px;
+}
+.htmlAreaStyle
+{
+   font-size:12px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   padding:30px;
+   /*color: #346679;*/
+   color: #25383C;
+   
+}
+/* -----------------Code added by Sonu from here------------------------*/
+
+.type1 
+{
+font-size:13px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight:normal;
+   
+   /*width:100px;*/
+   height:23px;
+   width:21px;
+   
+}
+.type2
+{
+   font-size:13px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight:normal;
+   /*width:100px;*/
+   height:23px;
+
+}
+.type3
+{
+   font-size:13px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight:normal;
+   /*width:100px;*/
+   height:22px;
+   
+}
+.type1d
+{
+   font-size:13px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight:normal;
+   /*width:100px;*/
+   height:23px;
+   width:21px;
+   border-bottom-style:solid;
+   border-left-style:solid;
+   border-right-style:solid;
+}
+.type2d
+{
+   font-size:13px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight:normal;
+   /*width:100px;*/
+   height:23px;
+   border-bottom-style:solid;
+   border-left-style:solid;
+   border-right-style:solid;
+}
+.type3d
+{
+   font-size:13px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   font-weight:normal;
+   /*width:100px;*/
+   height:23px;
+   border-bottom-style:solid;
+   border-left-style:solid;
+   border-right-style:solid;
+}
+  
+  .type2caps
+{
+   font-size:13px;
+   font-family:Verdana,Arial, Helvetica, sans-serif;
+   font-weight:normal;
+   /*width:100px;*/
+   height:23px;
+
+   border-bottom-style:solid;
+   border-left-style:solid;
+   border-right-style:solid;
+   color: red
+}
+/* -----------------Code added by Sonu upto here------------------------*/
+
+/*------------------Code added by Aastha---------------------------*/
+
+/*------------------Code added by Sakthivel.M_15.05---------------------------*/
+.fieldsetdesign
+{
+display:inline;
+margin-left:auto;
+margin-right:auto;
+text-align:left;
+color: #000;
+}
+/*-----------------Code added by Aastha----------------------------*/
+}
+/*-----------------Code added by Vishal 9 Dec 14----------------------------*/
+.ontop 
+{
+	z-index: 999;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	display: none;
+	position: absolute;				
+	
+}
+#popup 
+{
+				width: 300px;
+				height: 200px;
+				position: absolute;
+				color: red;
+				background-color: white;
+				/* To align popup window at the center of screen*/
+				top: 50%;
+				left: 40%;
+				margin-top: -100px;
+				margin-left: -150px;
+}
+
+
+.linkbr
+{
+color: #7F462C;
+}
+.dropDownList
+{
+   font-size:12px;
+   font-family:Verdana, Arial, Helvetica, sans-serif;
+   color: #25383C;
+}
+/*-----------------Code End added by Vishal 9 Dec 14----------------------------*/
+/*-----------------Code added by Anas 07 Dec 16----------------------------*/
+.multiSelectContainer { position: relative;} 
+.multiSelectContainer select { width: 100%;} 
+.overMultiSelect {position: absolute; left: 0; right: 0; top: 0; bottom: 0;}
+	
+	
+.multiSelectOptionContainer{
+		width:200px;
+}
+
+.multiSelect{
+		z-index: -1;
+		cursor:default;border:1px solid grey;padding:1px;margin-bottom:0px;
+		width:inherit;
+}
+
+.multiSelectOption{
+		display:none;
+		position: absolute;
+		z-index:1000;
+		width:7.5em;
+		border:1px solid #fff;
+		width:inherit;
+}
+
+.multiSelectDisplay{
+		background:#fff; 
+		overflow:auto;
+		height:7.1em;
+		border:1px solid #d4d0c8;
+		width:inherit;
+}
+
+.multiSelectDisplay input[type="checkbox"]{
+	margin-right: 3px;	
+}
+
+.multiSelectDisplay label{
+		padding-right:3px;display:block;
+		width:inherit;
+}
+.lightGrayTbl {
+	border: 1px solid #BABABA;
+	border-collapse: collapse;
+}
+
+.lightGrayTbl th {
+	background-color: #f3f3f3;
+	border: 1px solid #BABABA;
+	border-collapse: collapse;
+	padding: 5px;
+	font-family: Segoe UI, Calibri, Helvetica Neue, sans-serif;
+ 	font-weight: bold;	
+	vertical-align: top;
+	height: 25px;
+	font-size: 10pt;
+	color: #222222;
+	text-align: left;
+}
+
+.lightGrayTbl td {
+	background-color: #FFF;
+	border: 1px solid #BABABA;
+	border-collapse: collapse;
+	padding: 5px;
+	vertical-align: top;
+	font-family: Segoe UI, Calibri Light, Helvetica Neue, sans-serif;
+	font-weight: normal;
+	font-size: 11pt;
+	/* color: 121a1c; */
+	color: #222222;
+	text-align: left;
+}
+
+.btn-cvap-s {
+	border: 1px solid #2F528F;
+	border-radius: 5px;
+	font-family: Segoe UI, Calibri Light, Helvetica Neue, sans-serif;
+	font-size: 11pt;
+	font-weight: normal;
+	color: #000000;
+	padding: 3px 20px;
+	cursor: pointer;
+	background-image: linear-gradient(#E7F0F9, #BDD7EE, #9DC3E6);
+}
+
+/* CVP Additional */
+.btn-cvap-a {
+	border: 1px solid #D48512;
+	border-radius: 5px;
+	font-family: Segoe UI, Calibri Light, Helvetica Neue, sans-serif;
+	font-size: 11pt;
+	font-weight: normal;
+	color: #000000;
+	padding: 3px 20px;
+	cursor: pointer;
+	background-image: linear-gradient(#F7D7A7, #F4C074, #F2B964);
+}
+.text-cvap-a {{
+	font-family: Segoe UI, Calibri, Helvetica Neue, sans-serif;
+	font-size: 11pt;
+	background-color : #FEFFF0;
+	border: 1px solid #EEEEEE;
+	border-style: groove;
+}
+/*-----------------Code added end by Anas 07 Dec 16----------------------------*/

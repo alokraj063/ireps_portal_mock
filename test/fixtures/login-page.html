@@ -1,15 +1,63 @@
 <!DOCTYPE html>
+<!--
+  Mock IREPS login page. The real login page was not captured (the portal
+  logs users in with a security key through its PKI plugin), so this page
+  keeps the classic IREPS look and the markers DocLink's session detection
+  relies on (title "IREPS - Login", a password field, the security-key text).
+  The "Login with security key (simulated)" button is the mock's own
+  /login, which issues the JSESSIONID cookie; the User Id / Password form is
+  decorative and always answers with this page again.
+-->
 <html>
-<head><title>IREPS - Login</title></head>
-<body>
-<div class="header">Indian Railways E-Procurement System</div>
-<form action="/epsn/login.do" method="post">
-  <table>
-    <tr><td>User Id</td><td><input type="text" name="userId"></td></tr>
-    <tr><td>Password</td><td><input type="password" name="password"></td></tr>
-    <tr><td colspan="2">Login using Digital Signature Certificate / Security Key</td></tr>
-    <tr><td colspan="2"><input type="submit" value="Login"></td></tr>
-  </table>
-</form>
+<head>
+<title>IREPS - Login</title>
+<link rel="stylesheet" type="text/css" href="/ireps/css/irepsCommonCss.css">
+<style>
+.gradientClass{background: #0073B0; background: linear-gradient(to right, #0b3d91 0%, #0073B0 60%, #1e88c7 100%);}
+.mockLoginBox{width:440px;margin:40px auto;border:1px solid #0073B0;background:#f5f9fc;font-family:Verdana,Arial,sans-serif;font-size:12px}
+.mockLoginBox .hd{background:#0073B0;color:#fff;font-weight:bold;padding:6px 10px}
+.mockLoginBox .bd{padding:14px 16px}
+.mockLoginBox td{padding:4px}
+.mockLoginBox input[type=text],.mockLoginBox input[type=password]{width:220px}
+.mockKey{margin-top:12px;padding-top:12px;border-top:1px dashed #9bb}
+.mockKey button{font:inherit;padding:8px 14px;border-radius:4px;border:1px solid #124a8c;background:#124a8c;color:#fff;cursor:pointer}
+.mockFoot{font-family:Verdana,Arial,sans-serif;font-size:11px;color:#666;text-align:center}
+</style>
+</head>
+<body style="margin:0;background:#fff;">
+<table class="gradientClass" cellpadding="0" cellspacing="0" border="0" width="100%">
+  <tr><td>&nbsp;</td></tr>
+  <tr>
+    <td width="20%" style="padding-left:50px;"><img src="/ireps/images/gem-new-logo-v6.png" style="width:350px;height:90px;"/></td>
+    <td width="60%" align="center">
+      <div style="color:white; font-family: 'Adobe Garamond Pro', sans-serif; font-size:27px; line-height: 1.2;">
+        Government eMarketplace <br>
+        <font style="color: gold;">Indian Railways E-Procurement System</font>
+      </div>
+    </td>
+    <td width="20%" style="text-align:right;padding-right:10px;"><img src="/ireps/images/common/map.png" style="width:250px;height:90px;" alt="world map"></td>
+  </tr>
+  <tr><td>&nbsp;</td></tr>
+</table>
+<hr style="color:#4A4A4A;margin:0px;">
+
+<div class="mockLoginBox">
+  <div class="hd">User Login</div>
+  <div class="bd">
+    <form action="/epsn/login.do" method="post">
+      <table>
+        <tr><td>User Id</td><td><input type="text" name="userId" autocomplete="off"></td></tr>
+        <tr><td>Password</td><td><input type="password" name="password" autocomplete="off"></td></tr>
+        <tr><td colspan="2"><input type="submit" value="Login" class="buttonStyle"></td></tr>
+      </table>
+    </form>
+    <div class="mockKey">
+      <div><b>Login using Digital Signature Certificate / Security Key</b></div>
+      <p>The real portal authenticates with a security key (no user id or password is checked). This mock issues the portal's session cookie (<code>JSESSIONID</code>) directly:</p>
+      <form method="post" action="/login"><button type="submit">Login with security key (simulated)</button></form>
+    </div>
+  </div>
+</div>
+<p class="mockFoot">Mock IREPS portal &mdash; local stand-in for www.ireps.gov.in used to test DocLink. <a href="/mock/">Mock control panel</a></p>
 </body>
 </html>

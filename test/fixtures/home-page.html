@@ -1,0 +1,84 @@
+<!--
+  Mock IREPS "Bidder Home Page" (showHome.do), modelled on the captured home
+  page: same header (GeM logo, gold title), top strip (home icon, welcome
+  label), left menu with the "Pending Bills" and "Contracts" sections that
+  DocLink's flows start from. Only the sections relevant to DocLink are kept.
+  User name, company and IREPS ID are fictitious.
+
+  Placeholders replaced by the mock server:
+    MOCK:WELCOME   welcome label text
+    MOCK:NOTICE    scenario / login-state notice (may be empty)
+    MOCK:MAIN      main content (logged-in menu or the login box)
+-->
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<html lang="en">
+<head>
+<meta name="description" content="Indian Railways eProcurement Systems">
+<title>Bidder Home Page</title>
+<link rel="shortcut icon" href="/ireps/images/common/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" type="text/css" href="/ireps/css/irepsCommonCss.css">
+<link rel="stylesheet" type="text/css" href="/ireps/css/ddtabmenufiles/ddcolortabsHome.css">
+<link rel="stylesheet" type="text/css" href="/ireps/css/menuStyle.css">
+<script language="javascript" src="/ireps/pki/CRISPKI.js"></script>
+<script type="text/javascript" src="/ireps/js/jquery.1.11.1.js"></script>
+<script type="text/javascript" src="/ireps/js/works/postRequest.js"></script>
+<style>
+.gradientClass{background: #0073B0; background: linear-gradient(to right, #0b3d91 0%, #0073B0 60%, #1e88c7 100%);}
+.mockNotice{margin:8px 0 12px;padding:8px 12px;border-radius:4px;font-family:Verdana,Arial,sans-serif;font-size:12px}
+.mockNotice.ok{background:#e3f2f0;border:1px solid #2c7d76;color:#1f5c56}
+.mockNotice.warn{background:#fff4dc;border:1px solid #9a6200;color:#7a4e00}
+.mockLoginBox{width:420px;margin:30px auto;border:1px solid #0073B0;background:#f5f9fc}
+.mockLoginBox .hd{background:#0073B0;color:#fff;font-weight:bold;padding:6px 10px;font-family:Verdana,Arial,sans-serif;font-size:12px}
+.mockLoginBox .bd{padding:14px 16px;font-family:Verdana,Arial,sans-serif;font-size:12px}
+.mockLoginBox input[type=text],.mockLoginBox input[type=password]{width:220px}
+.mockFoot{font-family:Verdana,Arial,sans-serif;font-size:11px;color:#666;padding:10px 0}
+</style>
+</head>
+<body>
+<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" style="background-color:#ffffff;" class="table_br">
+  <tr valign="top">
+    <td colspan="3" height="75" width="100%">
+      <table class="gradientClass" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr><td>&nbsp;</td></tr>
+        <tr>
+          <td width="20%" style="padding-left:50px;"><img src="/ireps/images/gem-new-logo-v6.png" style="width:350px;height:90px;"/></td>
+          <td width="60%" align="center">
+            <div style="color:white; font-family: 'Adobe Garamond Pro', sans-serif; font-size:27px; line-height: 1.2;">
+              Government eMarketplace <br>
+              <font style="color: gold;">Indian Railways E-Procurement System</font>
+            </div>
+            <div><img src="/ireps/images/common/GoodsServices.png" height="auto;" width="28%"/></div>
+          </td>
+          <td width="20%" style="text-align:right;padding-right:10px;"><img src="/ireps/images/common/map.png" style="width:250px;height:90px;" alt="world map"></td>
+        </tr>
+        <tr><td>&nbsp;</td></tr>
+      </table>
+      <hr style="color:#4A4A4A;margin:0px;">
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" height="20">
+      <table width="100%" border="0" cellpadding="0" cellspacing="0" class="topStrip1">
+        <tr>
+          <td width="5%">
+            <div id="ddtabs" class="ddcolortabsHome" style="background-color: transparent;">
+              <ul><li style="height:30px;width:90px;"><a id="style1" style="background-color: transparent;margin-left:45px;color:white;font-weight:bold" href="/epsn/home/showHome.do" title="IREPS Home Page">Home</a></li></ul>
+            </div>
+          </td>
+          <td width="50%" height="20" valign="middle" align="center" class="welcomeLabel"><font size="2"><!--MOCK:WELCOME--></font></td>
+          <td width="25%" height="20" class="welcomeLabel" align="center"><font size="2"><div id="pendlum"></div></font></td>
+          <td width="20%" height="20" id="topLink" align="right" style="padding-right:20px;"><!--MOCK:TOPLINK--></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td width="100%" valign="top" style="padding:10px 20px;">
+      <!--MOCK:NOTICE-->
+      <!--MOCK:MAIN-->
+      <p class="mockFoot">Mock IREPS portal &mdash; local stand-in for www.ireps.gov.in used to test DocLink. Every value is fictitious. <a href="/mock/">Mock control panel</a></p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
