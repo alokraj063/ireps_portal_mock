@@ -156,3 +156,50 @@ export function buildCrnExportFilename(date = new Date(), extension = "xlsx") {
 export function buildCrnExportDownloadPath(date = new Date(), extension = "xlsx") {
   return buildDocumentExportDownloadPath("CRN", date, extension);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Purchase Order (PO) PDF                                                    */
+/* -------------------------------------------------------------------------- */
+
+export const PO_DOWNLOAD_SUBFOLDER = "DocLink/IREPS/PO";
+
+/** PO_<PO-NO>.pdf, e.g. PO_27253922100240.pdf. */
+export function buildPoFilename(poNo) {
+  const po = String(poNo || "").trim() || "unknown-po";
+  return sanitiseFilename(`PO_${po}.pdf`);
+}
+
+/** Downloads-relative path for the PO PDF: DocLink/IREPS/PO/PO_<PO>.pdf. */
+export function buildPoDownloadPath(poNo) {
+  return `${PO_DOWNLOAD_SUBFOLDER}/${buildPoFilename(poNo)}`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Inspection Certificate (IC) PDFs                                           */
+/* -------------------------------------------------------------------------- */
+
+export const IC_DOWNLOAD_SUBFOLDER = "DocLink/IREPS/IC";
+
+/**
+ * IC_<PO-NO>_<PO-SR>_<CALL-ID>.pdf, or IC_<PO-NO>_<CALL-ID>.pdf when the PO
+ * Sr. could not be read from the row.
+ * @param {string|null|undefined} poNo
+ * @param {string|null|undefined} poSr
+ * @param {string|null|undefined} callId
+ */
+export function buildIcFilename(poNo, poSr, callId) {
+  const po = String(poNo || "").trim() || "unknown-po";
+  const call = String(callId || "").trim() || "unknown-call";
+  const sr = String(poSr || "").trim();
+  return sanitiseFilename(sr ? `IC_${po}_${sr}_${call}.pdf` : `IC_${po}_${call}.pdf`);
+}
+
+/**
+ * Downloads-relative path for one IC copy, grouped by PO number:
+ * DocLink/IREPS/IC/<PO>/IC_<PO>_<POSR>_<CALLID>.pdf.
+ * @param {{ poNo?: string|null, poSerial?: string|null, callId?: string|null }} record
+ */
+export function buildIcDownloadPath(record) {
+  const po = String((record && record.poNo) || "").trim() || "unknown-po";
+  return `${IC_DOWNLOAD_SUBFOLDER}/${sanitiseFilename(po)}/${buildIcFilename(po, record && record.poSerial, record && record.callId)}`;
+}

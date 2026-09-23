@@ -1,0 +1,247 @@
+<!--
+  Sanitised copy of the real IREPS Purchase Order (PO) search result
+  (POST /epsn/searchPO.do with searchCriteria=PO, searchRange=3, poNo=<PO>).
+
+  Structure, control names and markup quirks follow the captured page:
+  "Total N result(s)" + "Download as Excel(.xlsx)" radio, then
+  <table id="table_id"> > <table id="dTbl2"> with a <thead> (Sr. No., Dept /
+  Rly. Unit, PO No., PO Date, Stock/Non-Stock, PO Value (INR), Action(s)) and
+  one <tr class="trPoRow"> per PO. The PO No. cell links to the PO PDF
+  (title="Click to View/Download PO"); the Action(s) cell repeats the link
+  (title="View/Download PO"), plus a Manage PO link (href="#") and a
+  javascript: acknowledgement link. Every business value is fictitious except
+  the PO number itself (a non-sensitive example already used throughout this
+  feature's design); the Struts token is FAKE.
+
+  Rows:
+    1  PO No. search for one PO (the normal "Total 1 result(s)" case)
+-->
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<html lang="en">
+<head>
+<meta name="description" content="Indian Railways eProcurement Systems">
+<title>PO Search</title>
+<link rel="stylesheet" type="text/css" href="/ireps/css/irepsCommonCss.css">
+<script language="javascript" src="/ireps/pki/CRISPKI.js"></script>
+<script type="text/javascript" src="/ireps/js/jquery.1.11.1.js"></script>
+<script type="text/javascript" src="/ireps/js/works/postRequest.js"></script>
+</head>
+
+<body>
+
+<table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" align="center" style="background-color:#ffffff;" class="table_br">
+  <tr valign="top">
+    <td colspan="3" height="75" width="100%">
+ <table class="gradientClass" cellpadding="0" cellspacing="0" border="0" width="100%">
+ <tr>
+ <td width="60%" align="center">
+ <div style="color:white; font-size:27px;">
+             Government eMarketplace <br>
+         <font style="color: gold;">Indian Railways E-Procurement System</font>
+         </div>
+ </td>
+ </tr>
+</table>
+ </td>
+  </tr>
+  <tr>
+    <td width="15%" valign="top">
+      <table><tr><td><a HREF="/epsn/home/showHome.do">Home</a></td></tr><tr><td><a HREF="/epsn/home/logout.do">Logout</a></td></tr></table>
+    </td>
+    <td width="70%" valign="top">
+							 <table width="97%">
+								<tr>
+									<td height="20" align="center" class="formLabel">
+										<span class="errorStyle"></span> <br>
+									</td>
+							    </tr>
+							 </table>
+							<form name="searchPOForm" method="post" action="/epsn/searchPO.do" onsubmit="return submitSearch();"><input type="hidden" name="org.apache.struts.taglib.html.TOKEN" value="FAKE-TOKEN-0123456789abcdef0123456789abcdef">
+							<input type="hidden" name="pageNo" value="1" id="pageNo">
+							<fieldset class="fieldsetStyle">
+							<legend class="legendStyle">Search</legend>
+							<table width="97%" border="0" cellpadding="2" class="tblSearch">
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;"><b>Search For</b></td>
+									<td>
+										<select name="searchCriteria" onchange="searchCriteriaChange();" style="width:400px;" class="comboStyle" id="searchCriteria"><option value="PO" selected="selected">PO</option>
+										<option value="RNOTE">Receipt Note (R-NOTE)</option>
+										<option value="DRR">Receipted Challan (DRR)</option>
+										<option value="MA">Modification Advice (MA)</option>
+										<option value="Rej">Rejection Advice (IMMS)</option>
+										<option value="CRC">Consignment Receipt Certificate (CRC)</option>
+										<option value="CRN">Consignment Receipt Note (CRN)</option>
+										<option value="Conversation">Conversation (Latest) on Warranty Rejection Advice (UDM)</option></select>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;"><b>Railway</b></td>
+									<td>
+										<select name="rly" style="width:260px;" class="comboStyle" id="selRly"><option value="-1">All</option>
+										<option value="01">Central Railway</option>
+										<option value="99">IREPS</option></select>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;">
+									<input type="radio" name="searchRange" value="3" checked="checked">&nbsp;&nbsp;<b>PO No.</b>
+									</td>
+									<td>
+										<input type="text" name="poNo" maxlength="16" value="27253922100240" onclick="javascript:document.forms[0].searchRange[0].click();" style="width:260px;" id="poNo">
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;padding-left: 30px;">
+										<input type="radio" name="searchRange" value="2">&nbsp;&nbsp;<b>Select Date</b>
+									</td>
+									<td >
+										From<span style="color: #c00000;"> *</span>
+										<input type="text" name="dateFrom" size="12" value="" readonly="readonly" id="ddmmyyDateformat1">
+									    <a id="dateImgFrom" href="javascript:NewCal('ddmmyyDateformat1','ddmmyyyy');" onclick="javascript:document.forms[0].searchRange[1].click();">
+									    	<img src="/ireps/images/common/cal.gif" width="16" height="16" border="0" alt="Pick a date">
+										</a>
+										&nbsp;&nbsp;
+										To<span style="color: #c00000;"> *</span>
+										<input type="text" name="dateTo" size="12" value="" readonly="readonly" id="ddmmyyDateformat2">
+										<a href="javascript:NewCal('ddmmyyDateformat2','ddmmyyyy')" onclick="javascript:document.forms[0].searchRange[1].click();">
+											<img src="/ireps/images/common/cal.gif" width="16" height="16" border="0" alt="Pick a date">
+										</a>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;padding-left: 30px;">
+										<input type="radio" name="searchRange" value="1" onclick="last180Days();">&nbsp;&nbsp;<b>Last 180 Days</b>
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td class="searchDtlCls" style="width:20%;"><b>Records Per Page</b></td>
+									<td>
+										<input type="text" name="recordsPerPage" value="20" id="recordsPerPageTxt">
+									</td>
+								</tr>
+								<tr style="line-height: 26px;">
+									<td colspan="2" align="center">
+										<input type="submit" name="submit" tabindex="7" value="Show Results" class="buttonStyle">
+										&nbsp;&nbsp;
+										<input type="button" name="" value="Reset" onclick="resetSearch();" class="buttonStyle">
+									</td>
+								</tr>
+								<tr><td colspan="2">&nbsp;</td></tr>
+							</table>
+							</fieldset>
+							<input type="hidden" name="searchCriteria" id="searchCriteria" value="">
+							<input type="hidden" name="signerUserType" id="signerUserType" value='4'>
+							</form>
+							<table><tr><td>&nbsp;</td></tr></table>
+							<div style="width:100%;" id="divResults">
+							<table cellpadding=2 style="border-collapse: collapse; margin-bottom: 10px; width:97%;">
+								<tr style="line-height: 30px;" class='ndtCls'>
+									<td class="formLabel"><b>Total 1 result(s)</b></td>
+								</tr>
+								<tr>
+									<td style="line-height: 30px;">
+										<input type="radio" name="exportRadio" value="E" onclick="exportExcel();"/> <b>Download as Excel(.xlsx)</b>
+									</td>
+								</tr>
+							</table>
+							<table border=1 cellpadding=2 style="border-collapse: collapse; width:97%; background-color: #FFFFFF;" id="table_id" >
+							<tr>
+							<td>
+							<table class="recordsTbl" id="dTbl2" >
+								<thead class="sticky-header">
+									<tr style="line-height: 26px;" class="trHdr">
+										<th class="searchDtlCls">Sr. No.</th>
+										<th class="searchDtlCls">Dept / Rly. Unit</th>
+										<th class="searchDtlCls">PO No.</th>
+										<th class="searchDtlCls">PO Date</th>
+										<th class="searchDtlCls">Stock/Non-Stock</th>
+										<th class="searchDtlCls">PO Value (INR)</th>
+										<th class='actionThCls'>Action(s)</th>
+									</tr>
+								</thead>
+								<tbody>
+<!-- PO rows from here -->
+									<tr style="line-height: 26px;" class="trPoRow">
+										<td class="searchDtlCls">1</td>
+										<td class="searchDtlCls">HQ/CR</td>
+										<td class="searchDtlCls">
+											<a href="/ireps/etender/pdfdocs/MMIS/PO/2026/01/27253922100240.pdf" title="Click to View/Download PO" target="_blank">27253922100240 </a>
+										</td>
+										<td> 16/01/2026</td>
+										<td class="searchDtlCls">S</td>
+										<td class="searchDtlCls">830705.84</td>
+										<td class="dataText">
+											<a title="View/Download PO" class="linkStyle" href="/ireps/etender/pdfdocs/MMIS/PO/2026/01/27253922100240.pdf" target="_blank" >
+												<img src="/ireps/images/common/View Negotiattion Details.png" alt="View/Download" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a title="Manage Your Purchase Order" class="linkStyle" href="#" onclick="postRequest('/epsn/dispatchParticulars/showDispatchParticular.do?rly=01&poKey=6581067&poNo=27253922100240')" >
+												<img src="/ireps/images/common/icon_view.gif" alt="Manage Your Purchase Order" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a onclick="viewDocAckDetails('658106701');" href="javascript:void(0);">
+												<img width="15" height="15" title="View Document Acknowledgement Details" alt="Click here to View Document Acknowledgement Details." src="/ireps/images/common/viewpayment.gif" border="0">
+											</a>
+										</td>
+									</tr>
+<!-- PO rows up to here -->
+								</tbody>
+							</table>
+							</td>
+							</tr>
+							</table>
+							<table>
+								<tr>
+									<td align="right" colspan="6">
+										<td colspan=5 align="right"><!-- PO pagination --></td></tr>
+									</td>
+								</tr>
+							</table>
+							<table><tr><td>&nbsp;</td></tr></table>
+							</div>
+    </td>
+    <td width="15%" valign="top">&nbsp;</td>
+  </tr>
+</table>
+
+<script>
+function submitSearch() {
+	document.getElementById('pageNo').value = '1';
+	if(!validateDateRange()) {
+		return false;
+	}
+}
+function searchCriteriaChange(){
+	var searchCriteria =document.getElementById('searchCriteria').value;
+	$('.ndtCls').show();
+	if(searchCriteria=="IC"){
+		document.getElementById('iclabel').style.display="table-cell";
+		document.getElementById('icval').style.display="table-cell";
+	}else{
+		document.getElementById('iclabel').style.display="none";
+		document.getElementById('icval').style.display="none";
+		document.getElementById('icNo').value="";
+	}
+}
+function last180Days() {
+	document.getElementById('ddmmyyDateformat1').value = '';
+	document.getElementById('ddmmyyDateformat2').value = '';
+}
+function resetSearch() {
+	document.forms[0].dateFrom.value = '';
+	document.forms[0].dateTo.value = '';
+	document.forms[0].rly.value = '-1';
+	document.getElementById('poNo').value = '';
+	document.getElementById('divResults').style.display = 'none';
+}
+function validateDateRange() {
+	return true;
+}
+</script>
+<script>
+$(document).ready(function() {
+	$('.ndtCls').hide();
+	$('#dTbl2').DataTable( { dom: 'flrtipB' } );
+} );
+</script>
+</body>
+</html>

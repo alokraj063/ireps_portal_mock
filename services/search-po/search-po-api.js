@@ -59,12 +59,24 @@ export const SEARCH_PO_CONFIG = Object.freeze({
  * option texts of the captured page.
  */
 export const SEARCH_PO_CRITERIA = Object.freeze({
+  PO: "PO",
   CRN: "CRN",
   RNOTE: "RNOTE",
   MA: "MA"
 });
 
 export const SEARCH_PO_DOCUMENT_TYPES = Object.freeze([
+  {
+    criteria: SEARCH_PO_CRITERIA.PO,
+    optionLabel: "PO",
+    shortLabel: "PO",
+    longLabel: "Purchase Order (PO)",
+    filePrefix: "IREPS_PO",
+    subfolder: "DocLink/IREPS/PO",
+    sheetName: "PO",
+    /** captured request: PO No. search (searchRange=3), recordsPerPage=20 */
+    defaultRecordsPerPage: 20
+  },
   {
     criteria: SEARCH_PO_CRITERIA.CRN,
     optionLabel: "Consignment Receipt Note (CRN)",

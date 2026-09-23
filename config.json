@@ -1,0 +1,6 @@
+{
+  "//": "DocLink target switch. Change \"target\" to \"mock\" or \"real\", save this file, then reload DocLink in chrome://extensions. No other file needs to change and no command needs to run.",
+  "target": "mock",
+  "mockBaseUrl": "http://localhost:8765",
+  "realBaseUrl": "https://www.ireps.gov.in"
+}
