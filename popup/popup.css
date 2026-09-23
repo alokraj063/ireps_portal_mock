@@ -610,6 +610,15 @@ body {
   padding: 6px 8px;
 }
 
+.section-heading {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
 /* ------------------------------------------------------ document lists (MA) */
 
 .doc-results {

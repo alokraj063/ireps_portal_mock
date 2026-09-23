@@ -1,0 +1,73 @@
+<!--
+  Sanitised copy of the real IREPS "Inspection Call List" page
+  (POST /epsn/tpi/vendorInspectionCallList.do with callType=I&status=I,
+  no PO number - loaded once to read the dynamic Struts token and the
+  portal's current date defaults before the PO search).
+
+  Structure and control names follow the captured page:
+  <form name="inspectionCallForm" action="/epsn/tpi/vendorInspectionCallList.do">
+  with the hidden token/totalRecords/callType fields, the Status / PO Number
+  row, the Inspection Agency / PL Number row, the Inspecting Official / PO
+  Serial No row, the Call Date / IC Date ranges (current portal defaults) and
+  the Stage dropdown. Every value is fictitious; the Struts token is FAKE.
+-->
+<html lang="en">
+<head><title>My Inspection Calls</title></head>
+<body>
+<table><tr><td><a href="/epsn/home/showHome.do">Home</a></td></tr></table>
+
+<form name="inspectionCallForm" method="post" action="/epsn/tpi/vendorInspectionCallList.do">
+<input type="hidden" name="org.apache.struts.taglib.html.TOKEN" value="FAKE-TOKEN-0123456789abcdef0123456789abcdef">
+<input type="hidden" name="totalRecords" value="5336" id="totalRecords">
+<input type="hidden" name="callType" id="callType" value="I">
+
+<table class="lightGrayTbl">
+<tr>
+  <th class="formLabel">Status</th>
+  <td class="formLabel"><select name="status" id="status"><option value="I">Completed / IC Issued</option></select></td>
+  <th class="formLabel">PO Number</th>
+  <td class="formLabel"><input type="text" name="poNo" value=""></td>
+</tr>
+<tr>
+  <th class="formLabel">Inspection Agency</th>
+  <td class="formLabel"><select name="inspAgency" id="inspAgency"><option value="-1">Select</option>
+    <option value="1086698">CENTRE FOR RAILWAY INFORMATION SYSTEMS-DELHI</option>
+    <option value="1086527">BUREAU VERITAS INDIA PRIVATE LIMITED-MUMBAI</option>
+    <option value="1086549">RITES LTD-GURGAON</option>
+    <option value="1086425">INTERTEK INDIA PRIVATE LIMITED-NEW DELHI</option>
+    <option value="1086600">TUV INDIA PVT LTD.-MUMBAI</option></select></td>
+  <th class="formLabel">PL Number</th>
+  <td class="formLabel"><input type="text" name="plNo" value=""></td>
+</tr>
+<tr>
+  <th class="formLabel">Inspecting Official</th>
+  <td class="formLabel"><input type="text" name="inspOfficial" value=""></td>
+  <th class="formLabel">PO Serial No</th>
+  <td class="formLabel"><input type="text" name="poSr" value=""></td>
+</tr>
+<tr>
+  <th class="formLabel">Call Date From</th>
+  <td class="formLabel"><input type="text" name="dateFrom" value="01/01/2025" readonly="readonly" id="dateFrom"></td>
+  <th class="formLabel">Call Date To</th>
+  <td class="formLabel"><input type="text" name="dateTo" value="18/09/2026" readonly="readonly" id="dateTo"></td>
+</tr>
+<tr>
+  <th class="formLabel">IC Date From</th>
+  <td class="formLabel"><input type="text" name="dateFromIC" value="01/01/2025" readonly="readonly" id="dateFromIC"></td>
+  <th class="formLabel">IC Date To</th>
+  <td class="formLabel"><input type="text" name="dateToIC" value="18/09/2026" readonly="readonly" id="dateToIC"></td>
+</tr>
+<tr>
+  <th class="formLabel">Stage</th>
+  <td class="formLabel"><select name="stage" id="stage"><option value="-1">All</option>
+    <option value="0">Product Inspection</option>
+    <option value="1">Stage Inspection I</option>
+    <option value="2">Stage Inspection II</option>
+    <option value="3">Stage Inspection III</option></select></td>
+</tr>
+</table>
+<input type="button" id="submitBtn" onclick="submitSearch();" value="Proceed">
+<input type="hidden" name="statusSelected" id="statusSelected" value="">
+</form>
+</body>
+</html>

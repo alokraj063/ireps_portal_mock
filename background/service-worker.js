@@ -26,11 +26,19 @@
  *   "View/Download MA" href fetched with the browser session, verified as PDF,
  *   saved to Downloads/DocLink/IREPS/MA/<date>/MA_<PO>_<MA>.pdf (3 at a time)
  *
+ * The PO / Inspection Certificate screen (one PO number, two independent
+ * downloads) is wired separately below:
+ *   popup PO_DOWNLOAD { poNo } -> same PO Search flow (searchCriteria=PO,
+ *   searchRange=3) -> the PO's "Click to View/Download PO" href downloaded
+ *   popup IC_DOWNLOAD { poNo } -> POST vendorInspectionCallList.do
+ *   (a different endpoint - services/inspection-certificate/) -> every
+ *   issued IC of that PO -> each "View/ Download IC PDF" href downloaded
+ *
  * It never touches viewBills.do; only the session/network helpers, the
  * offscreen document and chrome.downloads are shared.
  */
 
-import { IREPS_CONFIG, IrepsError, IREPS_ERROR } from "../services/ireps-api.js";
+import { IREPS_CONFIG, IrepsError, IREPS_ERROR, loadIrepsConfig } from "../services/ireps-api.js";
 import { checkIrepsSession } from "../services/session-service.js";
 import { extractBillStatusForm, publicFormInfo } from "../services/ireps-form.js";
 import { fetchBillStatus } from "../services/bill-status-service.js";
@@ -46,8 +54,10 @@ import { buildCrnExport } from "../services/crn/crn-export.js";
 import { buildRnoteExport } from "../services/rnote/rnote-export.js";
 import { searchMa, downloadMaPdfs, MA_ERROR, MA_FLOW_STAGES } from "../services/ma/ma-service.js";
 import { downloadBytes } from "../services/download-service.js";
+import { downloadPo, PO_ERROR, PO_FLOW_STAGES } from "../services/po/po-service.js";
+import { downloadInspectionCertificates, IC_ERROR, IC_FLOW_STAGES } from "../services/inspection-certificate/ic-service.js";
 import { buildDocumentExportDownloadPath } from "../utils/filename.js";
-import { MESSAGE_TYPES, TARGETS, STAGES, DOCUMENT_STAGES, MA_STAGES, documentStageLabel, describeError, STORAGE_KEYS, SESSION_KEYS } from "../utils/messages.js";
+import { MESSAGE_TYPES, TARGETS, STAGES, DOCUMENT_STAGES, MA_STAGES, PO_STAGES, IC_STAGES, documentStageLabel, describeError, STORAGE_KEYS, SESSION_KEYS } from "../utils/messages.js";
 import { logger } from "../utils/logger.js";
 
 const OFFSCREEN_URL = chrome.runtime.getURL("background/offscreen.html");
@@ -178,6 +188,30 @@ async function parseSearchPoInOffscreen(html, options = {}) {
     });
     if (!response || !response.ok) {
       throw new Error(response && response.error ? response.error : `${options.criteria} parser returned no result`);
+    }
+    return response.result;
+  });
+}
+
+/**
+ * Inspection Certificate results (vendorInspectionCallList.do) are parsed by
+ * their own parser in the offscreen document - a different endpoint from PO
+ * Search, so this is a separate bridge from parseSearchPoInOffscreen.
+ * @param {string} html
+ * @param {string} poNo
+ * @param {{ sourceUrl?: string|null }} [options]
+ */
+async function parseIcInOffscreen(html, poNo, options = {}) {
+  return withOffscreen(async () => {
+    const response = await chrome.runtime.sendMessage({
+      target: TARGETS.OFFSCREEN,
+      type: MESSAGE_TYPES.PARSE_IC_RESULTS,
+      html,
+      poNo,
+      sourceUrl: options.sourceUrl || null
+    });
+    if (!response || !response.ok) {
+      throw new Error(response && response.error ? response.error : "IC parser returned no result");
     }
     return response.result;
   });
@@ -841,6 +875,164 @@ async function resetMaState() {
 }
 
 /* -------------------------------------------------------------------------- */
+/* PO / Inspection Certificate download (one PO number, two independent jobs) */
+/* -------------------------------------------------------------------------- */
+
+/** @type {{ status: "idle"|"running"|"complete"|"error", stage: string, message: string, poNumber?: string|null, result?: object, error?: object|null, updatedAt: number }} */
+let poState = { status: "idle", stage: PO_STAGES.IDLE.id, message: "", poNumber: null, updatedAt: Date.now() };
+let poRunning = false;
+
+/**
+ * @type {{ status: "idle"|"searching"|"downloading"|"complete"|"error", stage: string, message: string,
+ *          poNumber?: string|null, count: number, downloads?: object|null, error?: object|null, updatedAt: number }}
+ */
+let icState = { status: "idle", stage: IC_STAGES.IDLE.id, message: "", poNumber: null, count: 0, downloads: null, error: null, updatedAt: Date.now() };
+let icRunning = false;
+
+async function setPoState(patch) {
+  poState = { ...poState, ...patch, updatedAt: Date.now() };
+  try {
+    await chrome.storage.session.set({ [SESSION_KEYS.PO_STATE]: poState });
+  } catch (error) {
+    logger.debug("Could not persist PO state", error);
+  }
+}
+
+async function setIcState(patch) {
+  icState = { ...icState, ...patch, updatedAt: Date.now() };
+  try {
+    await chrome.storage.session.set({ [SESSION_KEYS.IC_STATE]: icState });
+  } catch (error) {
+    logger.debug("Could not persist IC state", error);
+  }
+}
+
+const PO_STAGE_FOR_PROGRESS = {
+  [PO_FLOW_STAGES.CHECKING_SESSION]: PO_STAGES.CHECKING_SESSION,
+  [PO_FLOW_STAGES.CONNECTED]: PO_STAGES.CONNECTED,
+  [PO_FLOW_STAGES.SEARCHING]: PO_STAGES.SEARCHING,
+  [PO_FLOW_STAGES.PARSING]: PO_STAGES.PARSING
+};
+const IC_STAGE_FOR_PROGRESS = {
+  [IC_FLOW_STAGES.CHECKING_SESSION]: IC_STAGES.CHECKING_SESSION,
+  [IC_FLOW_STAGES.CONNECTED]: IC_STAGES.CONNECTED,
+  [IC_FLOW_STAGES.SEARCHING]: IC_STAGES.SEARCHING,
+  [IC_FLOW_STAGES.PARSING]: IC_STAGES.PARSING
+};
+
+/** Only accept a trimmed PO number string from the popup. */
+function sanitisePoNumber(raw) {
+  return typeof raw === "string" ? raw.trim() : "";
+}
+
+async function startPoDownload(rawPoNo) {
+  if (poRunning) return { started: false, error: describeError("PO_BUSY") };
+  const poNo = sanitisePoNumber(rawPoNo);
+  if (!poNo) return { started: false, error: describeError("IREPS_INVALID_REQUEST", { detail: "Please enter a PO Number." }) };
+  poRunning = true;
+  logger.info("PO download started", { poNo });
+
+  (async () => {
+    try {
+      await setPoState({ status: "running", stage: PO_STAGES.CHECKING_SESSION.id, message: PO_STAGES.CHECKING_SESSION.label, poNumber: poNo, error: null, result: undefined });
+      broadcast(MESSAGE_TYPES.PO_PROGRESS, { poNumber: poNo, stage: PO_STAGES.CHECKING_SESSION.id, message: PO_STAGES.CHECKING_SESSION.label });
+      const result = await downloadPo(poNo, {
+        parseHtml: (html, options) => parseSearchPoInOffscreen(html, { ...options, criteria: SEARCH_PO_CRITERIA.PO }),
+        onProgress: (stage) => {
+          const s = PO_STAGE_FOR_PROGRESS[stage];
+          if (!s) return;
+          setPoState({ stage: s.id, message: s.label });
+          broadcast(MESSAGE_TYPES.PO_PROGRESS, { poNumber: poNo, stage: s.id, message: s.label });
+        }
+      });
+      await setPoState({ status: "complete", stage: PO_STAGES.COMPLETE.id, message: PO_STAGES.COMPLETE.label, result, error: null });
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.LAST_PO_DOWNLOAD]: { lastDownloadAt: new Date().toISOString(), lastDownloadFilename: result.filename, lastPoNumber: poNo, lastStatus: "Downloaded successfully" }
+      });
+      broadcast(MESSAGE_TYPES.PO_DOWNLOAD_COMPLETE, { poNumber: poNo, ...result });
+      logger.info("PO download complete", { poNo, filename: result.filename });
+    } catch (error) {
+      const described = error instanceof IrepsError ? describeError(error.code, { status: error.status, detail: error.detail }) : describeError("UNKNOWN", { detail: errorDetail(error) });
+      if (!(error instanceof IrepsError)) logger.error("PO download failed", error);
+      else logger.warn("PO download stopped", { code: error.code });
+      if (described.code === PO_ERROR.SESSION_EXPIRED) lastSessionCheck = null;
+      await setPoState({ status: "error", stage: PO_STAGES.ERROR.id, message: described.title, error: described, result: undefined });
+      broadcast(MESSAGE_TYPES.PO_DOWNLOAD_ERROR, { poNumber: poNo, ...described });
+    } finally {
+      poRunning = false;
+    }
+  })();
+
+  return { started: true };
+}
+
+async function startIcDownload(rawPoNo) {
+  if (icRunning) return { started: false, error: describeError("IC_BUSY") };
+  const poNo = sanitisePoNumber(rawPoNo);
+  if (!poNo) return { started: false, error: describeError("IREPS_INVALID_REQUEST", { detail: "Please enter a PO Number." }) };
+  icRunning = true;
+  logger.info("IC download started", { poNo });
+
+  (async () => {
+    try {
+      await setIcState({ status: "searching", stage: IC_STAGES.CHECKING_SESSION.id, message: IC_STAGES.CHECKING_SESSION.label, poNumber: poNo, count: 0, downloads: null, error: null });
+      broadcast(MESSAGE_TYPES.IC_PROGRESS, { poNumber: poNo, stage: IC_STAGES.CHECKING_SESSION.id, message: IC_STAGES.CHECKING_SESSION.label, status: "searching" });
+      let announcedCount = false;
+      const result = await downloadInspectionCertificates(poNo, {
+        parseHtml: (html, options) => parseIcInOffscreen(html, poNo, options),
+        onProgress: (stage) => {
+          const s = IC_STAGE_FOR_PROGRESS[stage];
+          if (!s) return;
+          setIcState({ stage: s.id, message: s.label });
+          broadcast(MESSAGE_TYPES.IC_PROGRESS, { poNumber: poNo, stage: s.id, message: s.label, status: "searching" });
+        },
+        onDownloadProgress: (snapshot) => {
+          if (!announcedCount) {
+            announcedCount = true;
+            const label = `${snapshot.total} issued Inspection Certificate${snapshot.total === 1 ? "" : "s"} found`;
+            setIcState({ status: "downloading", stage: IC_STAGES.DOWNLOADING.id, message: snapshot.total ? `Downloading ${label}...` : "No issued Inspection Certificates were found for this PO.", count: snapshot.total, downloads: snapshot });
+            broadcast(MESSAGE_TYPES.IC_PROGRESS, { poNumber: poNo, stage: IC_STAGES.DOWNLOADING.id, message: label, status: "downloading" });
+          } else {
+            icState = { ...icState, downloads: snapshot, updatedAt: Date.now() };
+          }
+          broadcast(MESSAGE_TYPES.IC_DOWNLOAD_PROGRESS, { poNumber: poNo, downloads: snapshot });
+        }
+      });
+      const described = result.downloads.sessionExpired ? describeError("IC_SESSION_EXPIRED_DURING_DOWNLOAD") : null;
+      if (result.downloads.sessionExpired) lastSessionCheck = null;
+      const message =
+        result.count === 0
+          ? "No issued Inspection Certificates were found for this PO."
+          : `${result.downloads.completed} of ${result.downloads.total} Inspection Certificate${result.downloads.total === 1 ? "" : "s"} downloaded`;
+      await setIcState({ status: "complete", stage: IC_STAGES.COMPLETE.id, message, count: result.count, downloads: result.downloads, error: described });
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.LAST_IC_DOWNLOAD]: {
+          lastDownloadAt: result.downloads.finishedAt,
+          lastPoNumber: poNo,
+          lastCount: result.count,
+          lastCompleted: result.downloads.completed,
+          lastFailed: result.downloads.failed,
+          lastStatus: result.downloads.failed ? `${result.downloads.completed} downloaded, ${result.downloads.failed} failed` : message
+        }
+      });
+      broadcast(MESSAGE_TYPES.IC_DOWNLOAD_COMPLETE, { poNumber: poNo, count: result.count, downloads: result.downloads, error: described, message });
+      logger.info("IC download finished", { poNo, count: result.count, completed: result.downloads.completed, failed: result.downloads.failed });
+    } catch (error) {
+      const described = error instanceof IrepsError ? describeError(error.code, { status: error.status, detail: error.detail }) : describeError("UNKNOWN", { detail: errorDetail(error) });
+      if (!(error instanceof IrepsError)) logger.error("IC download failed", error);
+      else logger.warn("IC download stopped", { code: error.code });
+      if (described.code === IC_ERROR.SESSION_EXPIRED) lastSessionCheck = null;
+      await setIcState({ status: "error", stage: IC_STAGES.ERROR.id, message: described.title, error: described });
+      broadcast(MESSAGE_TYPES.IC_DOWNLOAD_ERROR, { poNumber: poNo, ...described });
+    } finally {
+      icRunning = false;
+    }
+  })();
+
+  return { started: true };
+}
+
+/* -------------------------------------------------------------------------- */
 /* Message router                                                             */
 /* -------------------------------------------------------------------------- */
 
@@ -873,7 +1065,13 @@ const handlers = {
     await restoreMaState();
     return publicMaState();
   },
-  [MESSAGE_TYPES.MA_RESET]: () => resetMaState()
+  [MESSAGE_TYPES.MA_RESET]: () => resetMaState(),
+
+  // PO / Inspection Certificate (one PO number, two independent downloads)
+  [MESSAGE_TYPES.PO_DOWNLOAD]: (message) => startPoDownload(message.poNo),
+  [MESSAGE_TYPES.GET_PO_STATE]: () => ({ ...poState, running: poRunning }),
+  [MESSAGE_TYPES.IC_DOWNLOAD]: (message) => startIcDownload(message.poNo),
+  [MESSAGE_TYPES.GET_IC_STATE]: () => ({ ...icState, running: icRunning })
 };
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -882,7 +1080,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const handler = handlers[message.type];
   if (!handler) return false;
 
-  Promise.resolve()
+  // config.json (mock vs. real IREPS) is read once per service-worker
+  // lifetime, before the first request it can affect; the listener itself
+  // stays registered synchronously above so no wake-up event is missed.
+  loadIrepsConfig()
     .then(() => handler(message))
     .then((response) => sendResponse(response ?? { ok: true }))
     .catch((error) => {

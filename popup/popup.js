@@ -12,6 +12,7 @@ import { UPLOAD_SOURCES, DOCUMENT_TYPES } from "../services/upload-service.js";
 import { formatFriendlyDateTime } from "../utils/filename.js";
 import { initDocuments, handleDocumentMessage, restoreDocuments } from "./popup-documents.js";
 import { initMa, handleMaMessage, restoreMa } from "./popup-ma.js";
+import { initPoIc, handlePoIcMessage, restorePoIc } from "./popup-po-ic.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,6 +24,7 @@ const el = {
   viewUpload: $("view-upload"),
   viewDocument: $("view-document"),
   viewMa: $("view-ma"),
+  viewPoIc: $("view-po-ic"),
   options: $("options"),
   optionsSummary: $("options-summary"),
   optRange: Array.from(document.querySelectorAll('input[name="opt-range"]')),
@@ -95,6 +97,7 @@ chrome.runtime.onMessage.addListener((message) => {
   if (!message || message.target !== TARGETS.POPUP) return false;
   if (handleDocumentMessage(message)) return false;
   if (handleMaMessage(message)) return false;
+  if (handlePoIcMessage(message)) return false;
   switch (message.type) {
     case MESSAGE_TYPES.IREPS_PROGRESS:
       renderProgress(message.stage, message.message);
@@ -121,6 +124,7 @@ function showView(name) {
   el.viewUpload.hidden = name !== "upload";
   el.viewDocument.hidden = name !== "document";
   el.viewMa.hidden = name !== "ma";
+  el.viewPoIc.hidden = name !== "po-ic";
 }
 
 /** Shared "IREPS login required" view (used by Bill Status and CRN). */
@@ -438,10 +442,12 @@ el.uploadForm.addEventListener("submit", async (event) => {
   refreshMeta();
   initDocuments({ send, showView, setConnection, setConnectionForError, showLogin, showResult, hideResult });
   initMa({ send, showView, setConnection, setConnectionForError, showLogin });
+  initPoIc({ send, showView, setConnection, setConnectionForError });
   const restored = await restoreJobState();
   const documentRestored = restored ? false : await restoreDocuments();
   const maRestored = restored || documentRestored ? false : await restoreMa();
-  if (!restored && !documentRestored && !maRestored) showView("main");
+  const poIcRestored = restored || documentRestored || maRestored ? false : await restorePoIc();
+  if (!restored && !documentRestored && !maRestored && !poIcRestored) showView("main");
   const state = await send(MESSAGE_TYPES.GET_JOB_STATE);
   if (!state || state.status !== "running") {
     if (restored && state && state.status === "error" && state.error && state.error.loginRequired) {
