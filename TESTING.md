@@ -120,17 +120,25 @@ You should see:
 
 ### C2. Point DocLink at the mock portal
 
-Terminal 2:
+Open `config.json` (in the `doclink-extension` folder) in any text editor
+and make sure it reads:
 
-```bash
-cd "/Users/I36260027/Desktop/DocLink Download/doclink-extension"
-node test/mock/switch-target.mjs mock
+```json
+{
+  "target": "mock",
+  ...
+}
 ```
 
-This changes only two things: the base URL in `services/ireps-api.js` and
-the host permission in `manifest.json`.
+That is the only file that ever needs to change to switch targets - no
+terminal command is required. (If you have a terminal handy, `node
+test/mock/switch-target.mjs mock` does the same one-line edit.)
 
 Then go to `chrome://extensions` and click **reload** on DocLink.
+
+Both `http://localhost:8765/*` and `https://www.ireps.gov.in/*` are declared
+in `manifest.json` permanently, so `config.json` is genuinely the only thing
+that changes - manifest.json is never touched by switching targets.
 
 ### C3. Test: logged out (Acceptance Test 2)
 
@@ -375,35 +383,77 @@ number, PO, unit, PO date and MA date. Mock log:
 6. Close the popup during a Download All and reopen it: the MA view is
    restored with live chips.
 
+### C9e. PO / Inspection Certificate download with the mock portal
+
+The mock knows one PO with both a PO PDF and 4 issued Inspection
+Certificates - `27253922100240` (the example used throughout this feature's
+design) - plus a second PO (`05220028100004`) with a PO PDF but no ICs, so
+both the success and the "no ICs yet" paths can be exercised. PO search
+answers `searchCriteria=PO` on the same `searchPO.do` endpoint as CRN/R-NOTE/
+MA; the IC search uses a different endpoint,
+`POST /epsn/tpi/vendorInspectionCallList.do`.
+
+1. Logged in on the mock, scenario `auto`. Open DocLink → **Download PO / IC**.
+2. Enter PO Number `27253922100240` → **Download PO**.
+
+Expected: "Searching PO..." then **✓ PO downloaded successfully**,
+`PO_27253922100240.pdf` in `Downloads\DocLink\IREPS\PO\`. Mock log:
+`POST searchPO.do search  criteria=PO| rly=-1 searchRange=3 poNo=27253922100240`.
+
+3. With the same PO Number → **Download Inspection Certificate**.
+
+Expected: "Searching issued ICs..." then "Downloading 4 issued Inspection
+Certificates...", then **✓ 4 Inspection Certificates downloaded**; files
+`IC_27253922100240_<PO Sr.>_<Call Id>.pdf` in
+`Downloads\DocLink\IREPS\IC\27253922100240\`. Mock log:
+`POST vendorInspectionCallList.do search  poNo=27253922100240 activity=searchResult`.
+Each PDF opens and reads "INSPECTION CERTIFICATE".
+
+4. Change PO Number to `05220028100004` → **Download PO** succeeds; →
+   **Download Inspection Certificate** shows **No Inspection Certificates
+   found** / "No issued Inspection Certificates were found for this PO." -
+   this is a successful result, not an error (the PO Number field is
+   unaffected either way, so both buttons can be used again without
+   re-typing it).
+5. Try a PO Number IREPS does not know, e.g. `00000000000000` → **Download PO**
+   shows **Purchase Order not found** (`Purchase Order 00000000000000 was not
+   found ...`).
+
+| Scenario link | Then | Expected |
+|---|---|---|
+| `ma-pdf-login` | Download Inspection Certificate (PO with 4 ICs) | First IC PDF fails with the session message, the rest are not attempted |
+| `ma-pdf-404` | Download Inspection Certificate | Every IC Failed, tooltip "IREPS returned HTTP 404"; nothing saved |
+| `expired` / `login` | Download PO or IC | **IREPS login required** view |
+| `http500` | Download PO or IC | Unable to search / Unable to load error |
+
+6. Close the popup mid-download (PO or IC) and reopen it: the PO/IC view is
+   restored with the live progress or the finished result.
+
 ### C10. Switch back to the real portal
 
-When finished with the mock:
-
-```bash
-cd "/Users/I36260027/Desktop/DocLink Download/doclink-extension"
-node test/mock/switch-target.mjs real
-```
-
-Then reload DocLink on `chrome://extensions`. Verify with:
+When finished with the mock, open `config.json` and set `"target": "real"`
+(or run `node test/mock/switch-target.mjs real`), then reload DocLink on
+`chrome://extensions`. Verify with:
 
 ```bash
 node test/mock/switch-target.mjs status
-# baseUrl: https://www.ireps.gov.in
-# host_permissions: ["https://www.ireps.gov.in/*"]
+# target: real
+# effective baseUrl: https://www.ireps.gov.in
 ```
 
 ---
 
 ## Part D — Test with the real IREPS portal (when access is available)
 
-1. Point DocLink at the real portal:
+1. Point DocLink at the real portal - edit `config.json` and set
+   `"target": "real"` (no terminal needed; a command is also available):
 
    ```bash
    cd "/Users/I36260027/Desktop/DocLink Download/doclink-extension"
    node test/mock/switch-target.mjs real
    node test/mock/switch-target.mjs status
-   # baseUrl: https://www.ireps.gov.in
-   # host_permissions: ["https://www.ireps.gov.in/*"]
+   # target: real
+   # effective baseUrl: https://www.ireps.gov.in
    ```
 
    Then reload DocLink on `chrome://extensions`. Nothing else changes: the

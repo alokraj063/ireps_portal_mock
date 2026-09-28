@@ -23,6 +23,12 @@ export const MESSAGE_TYPES = Object.freeze({
   GET_MA_STATE: "GET_MA_STATE",
   MA_RESET: "MA_RESET",
 
+  // popup -> service worker: PO / Inspection Certificate download (one PO number, two independent downloads)
+  PO_DOWNLOAD: "PO_DOWNLOAD",
+  GET_PO_STATE: "GET_PO_STATE",
+  IC_DOWNLOAD: "IC_DOWNLOAD",
+  GET_IC_STATE: "GET_IC_STATE",
+
   // service worker -> popup (broadcast)
   IREPS_PROGRESS: "IREPS_PROGRESS",
   IREPS_DOWNLOAD_COMPLETE: "IREPS_DOWNLOAD_COMPLETE",
@@ -35,10 +41,18 @@ export const MESSAGE_TYPES = Object.freeze({
   MA_DOWNLOAD_PROGRESS: "MA_DOWNLOAD_PROGRESS",
   MA_DOWNLOAD_COMPLETE: "MA_DOWNLOAD_COMPLETE",
   MA_ERROR: "MA_ERROR",
+  PO_PROGRESS: "PO_PROGRESS",
+  PO_DOWNLOAD_COMPLETE: "PO_DOWNLOAD_COMPLETE",
+  PO_DOWNLOAD_ERROR: "PO_DOWNLOAD_ERROR",
+  IC_PROGRESS: "IC_PROGRESS",
+  IC_DOWNLOAD_PROGRESS: "IC_DOWNLOAD_PROGRESS",
+  IC_DOWNLOAD_COMPLETE: "IC_DOWNLOAD_COMPLETE",
+  IC_DOWNLOAD_ERROR: "IC_DOWNLOAD_ERROR",
 
   // service worker -> offscreen document
   PARSE_BILL_STATUS: "PARSE_BILL_STATUS",
-  PARSE_SEARCH_PO_RESULTS: "PARSE_SEARCH_PO_RESULTS"
+  PARSE_SEARCH_PO_RESULTS: "PARSE_SEARCH_PO_RESULTS",
+  PARSE_IC_RESULTS: "PARSE_IC_RESULTS"
 });
 
 /** Routing targets so broadcast messages are only handled where intended. */
@@ -89,6 +103,30 @@ export const MA_STAGES = Object.freeze({
   READY: { id: "READY", label: "MA results ready" },
   DOWNLOADING: { id: "DOWNLOADING", label: "Downloading MA copies..." },
   COMPLETE: { id: "COMPLETE", label: "MA download finished" },
+  ERROR: { id: "ERROR", label: "Error" }
+});
+
+/** Single Purchase Order (PO) download workflow stages. */
+export const PO_STAGES = Object.freeze({
+  IDLE: { id: "IDLE", label: "" },
+  CHECKING_SESSION: { id: "CHECKING_SESSION", label: "Checking IREPS session..." },
+  CONNECTED: { id: "CONNECTED", label: "Loading IREPS PO Search..." },
+  SEARCHING: { id: "SEARCHING", label: "Searching PO..." },
+  PARSING: { id: "PARSING", label: "Reading PO details..." },
+  DOWNLOADING: { id: "DOWNLOADING", label: "Downloading PO..." },
+  COMPLETE: { id: "COMPLETE", label: "PO downloaded successfully" },
+  ERROR: { id: "ERROR", label: "Error" }
+});
+
+/** Inspection Certificate (IC) download workflow stages (search, then per-IC PDF downloads). */
+export const IC_STAGES = Object.freeze({
+  IDLE: { id: "IDLE", label: "" },
+  CHECKING_SESSION: { id: "CHECKING_SESSION", label: "Checking IREPS session..." },
+  CONNECTED: { id: "CONNECTED", label: "Loading IREPS Inspection Call List..." },
+  SEARCHING: { id: "SEARCHING", label: "Searching issued ICs..." },
+  PARSING: { id: "PARSING", label: "Reading IC records..." },
+  DOWNLOADING: { id: "DOWNLOADING", label: "Downloading Inspection Certificates..." },
+  COMPLETE: { id: "COMPLETE", label: "IC download finished" },
   ERROR: { id: "ERROR", label: "Error" }
 });
 
@@ -275,6 +313,94 @@ export const ERROR_CATALOG = Object.freeze({
     title: "Download Already Running",
     message: "Please wait for the current CRN / R-NOTE download to finish."
   },
+
+  /* ------------------------------------------------------- PO download */
+  IREPS_PO_SEARCH_FAILED: {
+    title: "Unable to search for the PO",
+    message: "DocLink could not complete the PO search request to IREPS ({detail}). Check your network connection and try again.",
+    connection: "offline"
+  },
+  IREPS_PO_RESULTS_INVALID: {
+    title: "Unable to recognise the PO results",
+    message: "IREPS did not return the PO search results page ({detail}). The page structure may have changed, or IREPS reported an error.",
+    connection: "connected"
+  },
+  IREPS_PO_NOT_FOUND: {
+    title: "Purchase Order not found",
+    message: "Purchase Order {detail} was not found (or is not visible to your IREPS account).",
+    notice: true,
+    connection: "connected"
+  },
+  IREPS_PO_PARSE_FAILED: {
+    title: "Unable to read the PO details",
+    message: "IREPS returned the PO search results page, but DocLink could not extract the PO details from it.",
+    connection: "connected"
+  },
+  IREPS_PO_LINK_NOT_FOUND: {
+    title: "PO document link not found",
+    message: "IREPS did not provide a \"View/Download PO\" link for this Purchase Order ({detail}).",
+    connection: "connected"
+  },
+  IREPS_PO_DOWNLOAD_FAILED: {
+    title: "PO download failed",
+    message: "DocLink could not download the PO PDF from IREPS ({detail}).",
+    connection: "connected"
+  },
+  IREPS_PO_INVALID_PDF: {
+    title: "PO document not valid",
+    message: "IREPS did not return a PDF for this Purchase Order ({detail}). Nothing was saved.",
+    connection: "connected"
+  },
+  PO_BUSY: {
+    title: "PO Download Already Running",
+    message: "Please wait for the current PO download to finish."
+  },
+
+  /* --------------------------------------- Inspection Certificate (IC) */
+  IREPS_IC_SEARCH_FAILED: {
+    title: "Unable to search Inspection Certificates",
+    message: "DocLink could not complete the Inspection Certificate search request to IREPS ({detail}). Check your network connection and try again.",
+    connection: "offline"
+  },
+  IREPS_IC_RESULTS_INVALID: {
+    title: "Unable to recognise the IC results",
+    message: "IREPS did not return the Inspection Call List results page ({detail}). The page structure may have changed, or IREPS reported an error.",
+    connection: "connected"
+  },
+  IREPS_IC_TOKEN_NOT_FOUND: {
+    title: "IREPS form token not found",
+    message: "The IREPS Inspection Call List page did not contain the expected form token. Reload IREPS, then try again.",
+    connection: "offline"
+  },
+  IREPS_IC_PARSE_FAILED: {
+    title: "Unable to read the IC records",
+    message: "IREPS returned the Inspection Call List results page, but DocLink could not extract the IC records from it.",
+    connection: "connected"
+  },
+  IREPS_IC_LINK_NOT_FOUND: {
+    title: "IC copy link not found",
+    message: "IREPS did not provide a \"View/ Download IC PDF\" link for this Inspection Certificate ({detail}).",
+    connection: "connected"
+  },
+  IREPS_IC_DOWNLOAD_FAILED: {
+    title: "IC copy download failed",
+    message: "DocLink could not download the Inspection Certificate PDF from IREPS ({detail}).",
+    connection: "connected"
+  },
+  IREPS_IC_INVALID_PDF: {
+    title: "IC copy not valid",
+    message: "IREPS did not return a PDF for this Inspection Certificate ({detail}). Nothing was saved.",
+    connection: "connected"
+  },
+  IC_SESSION_EXPIRED_DURING_DOWNLOAD: {
+    title: "IREPS session expired",
+    message: "Your IREPS session has expired.\n\nPlease log in again and retry the IC download.",
+    connection: "login"
+  },
+  IC_BUSY: {
+    title: "IC Download Already Running",
+    message: "Please wait for the current Inspection Certificate download to finish."
+  },
   NO_BACKGROUND_RESPONSE: {
     title: "DocLink Needs a Reload",
     message: "DocLink's background service did not answer ({detail}). Open chrome://extensions, click the reload icon on the DocLink card, then retry."
@@ -309,7 +435,9 @@ export const STORAGE_KEYS = Object.freeze({
   LAST_DOWNLOAD: "doclink.lastDownload",
   LAST_CRN_DOWNLOAD: "doclink.lastCrnDownload",
   LAST_RNOTE_DOWNLOAD: "doclink.lastRnoteDownload",
-  LAST_MA_DOWNLOAD: "doclink.lastMaDownload"
+  LAST_MA_DOWNLOAD: "doclink.lastMaDownload",
+  LAST_PO_DOWNLOAD: "doclink.lastPoDownload",
+  LAST_IC_DOWNLOAD: "doclink.lastIcDownload"
 });
 
 /** chrome.storage.session keys (memory only, cleared when Chrome closes). */
@@ -317,5 +445,7 @@ export const SESSION_KEYS = Object.freeze({
   JOB_STATE: "doclink.jobState",
   LAST_RESULT: "doclink.lastBillStatusResult",
   DOCUMENT_JOBS: "doclink.documentJobs",
-  MA_STATE: "doclink.maState"
+  MA_STATE: "doclink.maState",
+  PO_STATE: "doclink.poState",
+  IC_STATE: "doclink.icState"
 });

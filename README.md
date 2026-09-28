@@ -172,7 +172,7 @@ doclink-extension/
 | `storage` | `chrome.storage.local` for non-sensitive metadata (last download time, filename, record count); `chrome.storage.session` (memory only) for job state and the last parsed result used by the preview |
 | `tabs` | Open IREPS / the preview page in a new tab |
 | `offscreen` | Create an invisible offscreen document so the parser can use `DOMParser`; MV3 service workers have no DOM |
-| host `https://www.ireps.gov.in/*` (or `http://localhost:8765/*` while testing against the mock) | Lets the extension `fetch()` IREPS (viewBills.do and searchPO.do, same origin) with the user's cookies attached by Chrome. Switch with `node test/mock/switch-target.mjs real` / `mock` |
+| host `https://www.ireps.gov.in/*` and `http://localhost:8765/*` (both declared permanently) | Lets the extension `fetch()` IREPS (viewBills.do, searchPO.do, vendorInspectionCallList.do, same origin) with the user's cookies attached by Chrome. Which one is actually used is `config.json`'s `"target"` ("mock" or "real") - a plain hand-editable file, no manifest change or command needed to switch |
 
 Not requested: `cookies`, `<all_urls>`, `history`, `bookmarks`, `webRequest`,
 `debugger`. The extension never reads cookie values.
@@ -422,11 +422,16 @@ between scenarios (`auto`, `bills`, `large`, `login`, `redirect-login`,
 
 ```bash
 node test/mock/mock-ireps-server.mjs        # terminal 1, http://localhost:8765
-node test/mock/switch-target.mjs mock       # points baseUrl + host_permissions at it
+# set "target": "mock" in config.json (or: node test/mock/switch-target.mjs mock)
 # chrome://extensions -> reload DocLink
 # open http://localhost:8765/ -> Login -> open DocLink -> Download Bill Status
-node test/mock/switch-target.mjs real       # switch back before real use
+# set "target": "real" in config.json before real use (or: node test/mock/switch-target.mjs real)
 ```
+
+Both origins are always declared in `manifest.json`, so `config.json`'s
+`"target"` field is the only thing that ever needs to change to switch
+between the mock and the real portal - editing it by hand and reloading the
+extension works exactly like running `switch-target.mjs`.
 
 ### Manual acceptance tests
 

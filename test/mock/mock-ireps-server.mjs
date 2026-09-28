@@ -118,7 +118,10 @@ const pages = {
   crnSearch: readFileSync(join(fixtures, "crn-search-page.html"), "utf8"),
   crnResults: readFileSync(join(fixtures, "crn-results-page.html"), "utf8"),
   rnoteResults: readFileSync(join(fixtures, "rnote-results-page.html"), "utf8"),
-  maResults: readFileSync(join(fixtures, "ma-results-page.html"), "utf8")
+  maResults: readFileSync(join(fixtures, "ma-results-page.html"), "utf8"),
+  poResults: readFileSync(join(fixtures, "po-results-page.html"), "utf8"),
+  icListPage: readFileSync(join(fixtures, "ic-list-page.html"), "utf8"),
+  icResults: readFileSync(join(fixtures, "ic-results-page.html"), "utf8")
 };
 
 const FIXTURE_TOKEN_RE = /(name="org\.apache\.struts\.taglib\.html\.TOKEN"\s+value=")[^"]*(")/;
@@ -743,6 +746,140 @@ function renderMaResults(form, { token = issueToken(), message = "" } = {}) {
   return head + rowsHtml + tail;
 }
 
+/* --------------------------------------------------------------------- PO */
+
+const PO_ROWS_START = "<!-- PO rows from here -->";
+const PO_ROWS_END = "<!-- PO rows up to here -->";
+const poResultsHead = pages.poResults.slice(0, pages.poResults.indexOf(PO_ROWS_START) + PO_ROWS_START.length);
+const poResultsTail = pages.poResults.slice(pages.poResults.indexOf(PO_ROWS_END));
+
+/** Known Purchase Orders (fictitious except the PO number, an example already used throughout this feature's design). */
+const MOCK_PO_DB = [
+  { poNo: "27253922100240", rly: "01", unit: "HQ/CR", poDate: "16/01/2026", stockType: "S", poValue: "830705.84", folder: "2026/01" },
+  { poNo: "05220028100004", rly: "05", unit: "HQ/NR", poDate: "20/05/2026", stockType: "N", poValue: "412300.00", folder: "2026/05" }
+];
+
+function renderPoRow(po) {
+  const href = `/ireps/etender/pdfdocs/MMIS/PO/${po.folder}/${po.poNo}.pdf`;
+  return `
+									<tr style="line-height: 26px;" class="trPoRow">
+										<td class="searchDtlCls">1</td>
+										<td class="searchDtlCls">${po.unit}</td>
+										<td class="searchDtlCls">
+											<a href="${href}" title="Click to View/Download PO" target="_blank">${po.poNo} </a>
+										</td>
+										<td> ${po.poDate}</td>
+										<td class="searchDtlCls">${po.stockType}</td>
+										<td class="searchDtlCls">${po.poValue}</td>
+										<td class="dataText">
+											<a title="View/Download PO" class="linkStyle" href="${href}" target="_blank" >
+												<img src="/ireps/images/common/View Negotiattion Details.png" alt="View/Download" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a title="Manage Your Purchase Order" class="linkStyle" href="#" onclick="postRequest('/epsn/dispatchParticulars/showDispatchParticular.do?rly=${po.rly}&poKey=1000&poNo=${po.poNo}')" >
+												<img src="/ireps/images/common/icon_view.gif" alt="Manage Your Purchase Order" height="15" width="15" border="0" class="linkStyle" />
+											</a>
+											<a onclick="viewDocAckDetails('1000');" href="javascript:void(0);">
+												<img width="15" height="15" title="View Document Acknowledgement Details" alt="Click here to View Document Acknowledgement Details." src="/ireps/images/common/viewpayment.gif" border="0">
+											</a>
+										</td>
+									</tr>
+`;
+}
+
+/**
+ * PO Search results for searchCriteria=PO. A PO No. search (searchRange=3,
+ * the only mode the real captured flow uses) returns exactly the one
+ * matching PO or "Total 0 result(s)"; the other search modes list every
+ * known PO (kept for completeness of the shared searchPO.do infrastructure).
+ */
+function renderPoResults(form, { token = issueToken(), message = "" } = {}) {
+  let head = poResultsHead.replace(FIXTURE_TOKEN_RE, `$1${token}$2`);
+  if (message) head = head.replace('<span class="errorStyle"></span>', `<span class="errorStyle">${message}</span>`);
+  let matches = [];
+  if (scenario !== "no-records") {
+    if (form.searchRange === "3") matches = MOCK_PO_DB.filter((po) => po.poNo === form.poNo);
+    else matches = MOCK_PO_DB;
+  }
+  head = head.replace(/<b>Total \d+ result\(s\)<\/b>/, `<b>Total ${matches.length} result(s)</b>`);
+  const rowsHtml = matches.map(renderPoRow).join("");
+  return head + rowsHtml + poResultsTail;
+}
+
+/* --------------------------------------------------------------------- IC */
+
+/**
+ * Issued Inspection Certificates per PO (fictitious except the PO number and
+ * the folder/call-id shapes, modelled on the captured real response: the PO
+ * used throughout this feature's design has 4 issued ICs; any other PO has
+ * none, so "Download Inspection Certificate" can be tested both ways).
+ */
+const MOCK_IC_DB = {
+  "27253922100240": [
+    { callId: "6038184070", poSr: "001", pdf: "3480517" },
+    { callId: "3778184071", poSr: "002", pdf: "2975517" },
+    { callId: "9012184072", poSr: "003", pdf: "6691517" },
+    { callId: "4523184073", poSr: "004", pdf: "8794517" }
+  ]
+};
+
+const IC_ROWS_START = "<!-- IC rows from here -->";
+const IC_ROWS_END = "<!-- IC rows up to here -->";
+const icResultsHead = pages.icResults.slice(0, pages.icResults.indexOf(IC_ROWS_START) + IC_ROWS_START.length);
+const icResultsTail = pages.icResults.slice(pages.icResults.indexOf(IC_ROWS_END));
+
+function renderIcRow(ic, po, index, total) {
+  const leading =
+    index === 0
+      ? `
+  <td rowspan="${total}">05/05/2026</td>
+  <td rowspan="${total}">TUV INDIA PVT LTD.-MUMBAI</td>
+  <td rowspan="${total}"><a href="#" onclick="viewPastCall('01','6581067');">${po.poNo}<br /> dt. ${po.poDate}</a></td>`
+      : "";
+  return `
+<tr>${leading}
+  <td class="dataText">${ic.callId}</td>
+  <td class="dataText"><a href="#" onclick="viewPastCallpoSr('${ic.poSr}','01','6581067');">${ic.poSr}</a></td>
+  <td class="dataText">29160030: KIT FOR UNLOADER EXHAUST VALVE Part no 790002165.</td>
+  <td class="dataText">Product - Final Product Inspection</td>
+  <td class="dataText">106</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">07/05/2026</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">106</td>
+  <td class="dataText">Completed (IC Issued)</td>
+  <td class="dataText">
+    <a href="#" onclick="viewCall('1','${ic.callId}','01','6581067');"><img alt="View Call Details" src="/ireps/images/tpi/inspection-call-1.png" title="View Call Details"></a>
+    <a href="/ireps/etender/ct/tpi/ic/052026/${ic.pdf}.pdf" target="_blank" title="View/ Download IC PDF"><img alt="View/ Download IC PDF" src="/ireps/images/tpi/insp-cert.png"></a>
+    <a href="#" onclick="icRevaidate('${ic.pdf}');"><i class="fa fa-retweet"></i></a>
+  </td>
+</tr>
+`;
+}
+
+/** Inspection Call List page (POST callType=I&status=I, no token yet). */
+function renderIcListPage({ token = issueToken() } = {}) {
+  return pages.icListPage.replace(FIXTURE_TOKEN_RE, `$1${token}$2`);
+}
+
+/** Inspection Call List search result for one PO (POST with token, activity=searchResult). */
+function renderIcResults(poNo, { token = issueToken() } = {}) {
+  const ics = scenario === "no-records" ? [] : MOCK_IC_DB[poNo] || [];
+  let head = icResultsHead.replace(FIXTURE_TOKEN_RE, `$1${token}$2`);
+  head = head.replace('value="27253922100240"', `value="${poNo}"`).replace('value="4" id="totalRecords"', `value="${ics.length}" id="totalRecords"`);
+  head = head.replace(/Total Records: \d+/, `Total Records: ${ics.length}`);
+  const po = MOCK_PO_DB.find((p) => p.poNo === poNo) || { poNo, poDate: "01/01/2026" };
+  const rowsHtml = ics.map((ic, i) => renderIcRow(ic, po, i, ics.length)).join("");
+  return head + rowsHtml + icResultsTail;
+}
+
+/** Route to the type-specific results renderer by the last submitted searchCriteria. */
+function renderSearchResults(criteria, params) {
+  if (criteria === "PO") return renderPoResults(params);
+  if (criteria === "RNOTE") return renderRnoteResults(params);
+  if (criteria === "MA") return renderMaResults(params);
+  return renderCrnResults(params);
+}
+
 function renderCrnSearchPage({ token = issueToken(), withToken = true } = {}) {
   let page = pages.crnSearch.replace(FIXTURE_TOKEN_RE, `$1${token}$2`);
   if (!withToken) page = page.replace(/<input type="hidden" name="org\.apache\.struts\.taglib\.html\.TOKEN"[^>]*>/, "");
@@ -769,7 +906,7 @@ function validateCrnSearch(form) {
   if (missing.length) return `Missing form field(s): ${missing.join(", ")}`;
   const criteria = form.getAll("searchCriteria");
   if (criteria.length !== 2 || criteria[1] !== "") return `Expected searchCriteria twice (select + empty hidden field), got ${JSON.stringify(criteria)}`;
-  if (!["CRN", "RNOTE", "MA"].includes(criteria[0])) return `This mock only serves searchCriteria=CRN, RNOTE or MA (got "${criteria[0]}")`;
+  if (!["PO", "CRN", "RNOTE", "MA"].includes(criteria[0])) return `This mock only serves searchCriteria=PO, CRN, RNOTE or MA (got "${criteria[0]}")`;
   if (form.get("submit") !== "Show Results") return `Unexpected submit value "${form.get("submit")}"`;
   if (!["1", "2", "3"].includes(form.get("searchRange"))) return `Unexpected searchRange "${form.get("searchRange")}"`;
   if (!/^\d+$/.test(form.get("pageNo"))) return `Unexpected pageNo "${form.get("pageNo")}"`;
@@ -1059,7 +1196,7 @@ const server = createServer(async (req, res) => {
         pageNo: form.get("pageNo") || "1",
         recordsPerPage: form.get("recordsPerPage") || "20"
       };
-      return html(res, 200, lastSearchCriteria === "RNOTE" ? renderRnoteResults(params) : lastSearchCriteria === "MA" ? renderMaResults(params) : renderCrnResults(params));
+      return html(res, 200, renderSearchResults(lastSearchCriteria, params));
     }
 
     const error = validateCrnSearch(form);
@@ -1086,9 +1223,69 @@ const server = createServer(async (req, res) => {
       recordsPerPage: form.get("recordsPerPage")
     };
     lastSearchCriteria = form.get("searchCriteria");
-    const page = lastSearchCriteria === "RNOTE" ? renderRnoteResults(params) : lastSearchCriteria === "MA" ? renderMaResults(params) : renderCrnResults(params);
+    const page = renderSearchResults(lastSearchCriteria, params);
     if (scenario === "slow") return setTimeout(() => html(res, 200, page), 6000);
     return html(res, 200, page);
+  }
+
+  /* ---------------------------------------------------- Inspection Certificate */
+
+  if (path === "/epsn/tpi/vendorInspectionCallList.do") {
+    const body = req.method === "POST" ? await readBody(req) : "";
+    const form = new URLSearchParams(body);
+    const kind = form.has("org.apache.struts.taglib.html.TOKEN") ? "search" : "page";
+    console.log(
+      `[mock-ireps] ${req.method} vendorInspectionCallList.do ${kind}  scenario=${scenario} cookie=${hasSession(req) ? "yes" : "no"}` +
+        (kind === "search" ? `  poNo=${form.get("poNo")} activity=${form.get("activity")}` : "")
+    );
+
+    switch (scenario) {
+      case "login":
+        return html(res, 200, pages.login);
+      case "redirect-login":
+        return html(res, 302, "", { Location: "/epsn/login.do" });
+      case "expired":
+        return html(res, 200, pages.expired);
+      case "http500":
+        return html(res, 500, "<html><body><h1>HTTP Status 500 - Internal Server Error</h1></body></html>");
+      case "auto":
+      case "no-records":
+        if (!hasSession(req)) return html(res, 200, pages.login);
+        break;
+      default:
+        break;
+    }
+
+    if (kind === "page") {
+      const page = renderIcListPage();
+      if (scenario === "slow") return setTimeout(() => html(res, 200, page), 6000);
+      return html(res, 200, page);
+    }
+
+    const token = form.get("org.apache.struts.taglib.html.TOKEN");
+    if (scenario === "token-invalid" || !consumeToken(token)) {
+      console.log("[mock-ireps] IC search rejected: invalid or reused token");
+      return html(
+        res,
+        200,
+        "<html><head><title>Error</title></head><body><h2>Invalid Token</h2><p>The form was already submitted or the page was reloaded. Please try again.</p></body></html>"
+      );
+    }
+    const page = renderIcResults(form.get("poNo") || "");
+    if (scenario === "slow") return setTimeout(() => html(res, 200, page), 6000);
+    return html(res, 200, page);
+  }
+
+  if (/^\/ireps\/etender\/ct\/tpi\/ic\/.+\.pdf$/.test(path)) {
+    const file = decodeURIComponent(path.split("/").pop());
+    if (scenario === "ma-pdf-login") return html(res, 200, pages.login);
+    if (scenario === "ma-pdf-404") return html(res, 404, "<html><body><h1>HTTP Status 404 - Not Found</h1></body></html>");
+    console.log(`[mock-ireps] GET pdf INSPECTION CERTIFICATE ${file}  scenario=${scenario} cookie=${hasSession(req) ? "yes" : "no"}`);
+    if (!hasSession(req)) return html(res, 200, pages.login);
+    const pdf = tinyPdf([`INDIAN RAILWAYS E-PROCUREMENT SYSTEM (MOCK)`, `INSPECTION CERTIFICATE`, `Document: ${file.replace(/\.pdf$/i, "")}`, `Generated by the DocLink mock server for testing.`]);
+    res.writeHead(200, { "Content-Type": "application/pdf", "Content-Length": pdf.length, "Content-Disposition": `inline; filename="${file}"`, "Cache-Control": "no-store" });
+    if (scenario === "slow") return setTimeout(() => res.end(pdf), 2000);
+    return res.end(pdf);
   }
 
   if (/^\/(ireps\/etender\/ct\/(MMIS\/CONS|MMIS\/CRC\/WAR|MOCK\/RNOTE|sbill)|ireps\/etender\/pdfdocs\/MMIS\/PO|mock\/ma|mock\/po)\/.+\.pdf$/.test(path)) {

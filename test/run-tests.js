@@ -18,7 +18,9 @@ import {
   BILL_SEARCH_MODE,
   BILL_STATUS_FORM_FIELDS,
   IREPS_ERROR,
-  IrepsError
+  IrepsError,
+  IREPS_CONFIG,
+  loadIrepsConfig
 } from "../services/ireps-api.js";
 import { fetchBillStatus } from "../services/bill-status-service.js";
 import { generateBillStatusPdf, __internals as pdfInternals } from "../services/pdf-service.js";
@@ -29,6 +31,8 @@ import { describeError } from "../utils/messages.js";
 import { runCrnTests } from "./crn-tests.js";
 import { runRnoteTests } from "./rnote-tests.js";
 import { runMaTests } from "./ma-tests.js";
+import { runPoTests } from "./po-tests.js";
+import { runIcTests } from "./ic-tests.js";
 
 const results = [];
 const list = document.getElementById("results");
@@ -669,6 +673,52 @@ await test("error catalogue maps IREPS codes to user messages", () => {
   eq(describeError("nonsense").code, "UNKNOWN");
 });
 
+/* ---------------------------------------------------------- config.json */
+
+await test("loadIrepsConfig: target mock/real, explicit baseUrl override, custom mock port, safe fallback on error, cached until forced", async () => {
+  const realFetch = globalThis.fetch;
+  const realChrome = globalThis.chrome;
+  let served = null;
+  globalThis.chrome = { runtime: { getURL: (p) => `file://fake/${p}` } };
+  globalThis.fetch = async () => ({ json: async () => served });
+  try {
+    served = { target: "mock" };
+    await loadIrepsConfig({ force: true });
+    eq(IREPS_CONFIG.baseUrl, "http://localhost:8765");
+
+    served = { target: "real" };
+    await loadIrepsConfig({ force: true });
+    eq(IREPS_CONFIG.baseUrl, "https://www.ireps.gov.in");
+
+    served = { target: "mock", baseUrl: "http://localhost:9999" };
+    await loadIrepsConfig({ force: true });
+    eq(IREPS_CONFIG.baseUrl, "http://localhost:9999", "an explicit baseUrl always wins over target");
+
+    served = { target: "mock", mockBaseUrl: "http://localhost:7000" };
+    await loadIrepsConfig({ force: true });
+    eq(IREPS_CONFIG.baseUrl, "http://localhost:7000");
+
+    let fetchCalls = 0;
+    globalThis.fetch = async () => {
+      fetchCalls++;
+      throw new Error("network down");
+    };
+    await loadIrepsConfig({ force: true });
+    eq(IREPS_CONFIG.baseUrl, "http://localhost:7000", "a failed config load keeps the previous target, never crashes");
+    eq(fetchCalls, 1);
+
+    await loadIrepsConfig();
+    eq(fetchCalls, 1, "without force, an already-loaded config is not re-fetched");
+  } finally {
+    served = { target: "mock" };
+    globalThis.fetch = async () => ({ json: async () => served });
+    await loadIrepsConfig({ force: true }); // restore the mock default (via the stub) before undoing it, so every other test sees the real default
+    globalThis.fetch = realFetch;
+    globalThis.chrome = realChrome;
+    eq(IREPS_CONFIG.baseUrl, "http://localhost:8765");
+  }
+});
+
 /* ------------------------------------------------------------- utilities */
 
 await test("sanitiser removes scripts, handlers and javascript urls", () => {
@@ -758,6 +808,8 @@ await test("PDF generation: long recovery details wrap and cards split across pa
 await runCrnTests({ test, assert, eq, rejects, fixture, FAKE_TOKEN });
 await runRnoteTests({ test, assert, eq, rejects, fixture, FAKE_TOKEN });
 await runMaTests({ test, assert, eq, rejects, fixture, FAKE_TOKEN });
+await runPoTests({ test, assert, eq, rejects, fixture, FAKE_TOKEN });
+await runIcTests({ test, assert, eq, rejects, fixture, FAKE_TOKEN });
 
 /* ---------------------------------------------------------------- report */
 

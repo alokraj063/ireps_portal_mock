@@ -23,17 +23,30 @@
  * requests are made with credentials: "include". The mock portal issues
  * cookies of the same names and shape, so nothing here changes between them.
  *
- * Switching between the mock portal and the real portal changes ONLY
- * IREPS_CONFIG.baseUrl (and manifest host_permissions):
- *   node test/mock/switch-target.mjs mock | real
+ * Switching between the mock portal and the real portal is a single line in
+ * config.json ("target": "mock" | "real") - both host_permissions are
+ * declared permanently in manifest.json so no manifest edit is ever needed.
+ * Every context that talks to IREPS (the service worker and the offscreen
+ * document each run their own copy of this module) reads it once at
+ * startup via loadIrepsConfig(); see background/service-worker.js and
+ * background/offscreen.js.
  */
 
 import { logger } from "../utils/logger.js";
 import { STRUTS_TOKEN_FIELD, ALL_ZONES_VALUE } from "./ireps-form.js";
 
-/** Base configuration. Keep every IREPS URL here. */
+const DEFAULT_MOCK_BASE_URL = "http://localhost:8765";
+const DEFAULT_REAL_BASE_URL = "https://www.ireps.gov.in";
+
+/** Mutable only through loadIrepsConfig(); everything else treats it as read-only. */
+let currentBaseUrl = DEFAULT_MOCK_BASE_URL;
+let configLoaded = false;
+
+/** Base configuration. Keep every IREPS URL here. baseUrl is a live getter so config.json can change it after this module has loaded. */
 export const IREPS_CONFIG = Object.freeze({
-  baseUrl: "http://localhost:8765",
+  get baseUrl() {
+    return currentBaseUrl;
+  },
   /** The portal's home page (captured: GET /epsn/home/showHome.do); "Open IREPS" lands here. */
   homePath: "/epsn/home/showHome.do",
   billStatusEndpoint: "/epsn/admin/viewBills.do",
@@ -42,6 +55,38 @@ export const IREPS_CONFIG = Object.freeze({
   /** Reject absurdly small responses as "not a bill status page". */
   minimumHtmlLength: 200
 });
+
+/**
+ * Read config.json (bundled with the extension, hand-editable, never built)
+ * and apply its target to IREPS_CONFIG.baseUrl. Safe to call more than once;
+ * after the first successful load it is a no-op unless `force` is passed.
+ * On any error (missing file, bad JSON, running outside an extension
+ * context) it silently keeps the current baseUrl.
+ *
+ * @param {{ force?: boolean }} [options]
+ * @returns {Promise<string>} the effective baseUrl after loading
+ */
+export async function loadIrepsConfig({ force = false } = {}) {
+  if (configLoaded && !force) return currentBaseUrl;
+  try {
+    const url = typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL("config.json") : "./config.json";
+    const response = await fetch(url, { cache: "no-store" });
+    const config = await response.json();
+    if (config && typeof config.baseUrl === "string" && config.baseUrl) {
+      currentBaseUrl = config.baseUrl; // explicit override, takes precedence over target
+    } else if (config && config.target === "real") {
+      currentBaseUrl = (config.realBaseUrl && String(config.realBaseUrl)) || DEFAULT_REAL_BASE_URL;
+    } else {
+      currentBaseUrl = (config && config.mockBaseUrl && String(config.mockBaseUrl)) || DEFAULT_MOCK_BASE_URL;
+    }
+    logger.info(`IREPS config loaded: target=${(config && config.target) || "mock"}`);
+  } catch (error) {
+    logger.warn("Could not load config.json; keeping the current IREPS target", error);
+  } finally {
+    configLoaded = true;
+  }
+  return currentBaseUrl;
+}
 
 /** searchRange radio values on the IREPS form. */
 export const BILL_SEARCH_RANGE = Object.freeze({

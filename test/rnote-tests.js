@@ -84,8 +84,8 @@ export async function runRnoteTests({ test, assert, eq, rejects, fixture }) {
 
   /* ------------------------------------------------------- shared layer */
 
-  await test("PO Search document types: CRN and RNOTE are known, anything else is UNSUPPORTED_IREPS_SEARCH_TYPE", () => {
-    eq(SEARCH_PO_DOCUMENT_TYPES.map((t) => t.criteria).join(","), "CRN,RNOTE,MA");
+  await test("PO Search document types: PO, CRN and RNOTE are known, anything else is UNSUPPORTED_IREPS_SEARCH_TYPE", () => {
+    eq(SEARCH_PO_DOCUMENT_TYPES.map((t) => t.criteria).join(","), "PO,CRN,RNOTE,MA");
     eq(documentTypeFor("RNOTE").optionLabel, "Receipt Note (R-NOTE)");
     eq(documentTypeFor("RNOTE").shortLabel, "R-NOTE");
     let err = null;

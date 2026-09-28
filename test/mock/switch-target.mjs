@@ -1,16 +1,13 @@
 /**
- * Point DocLink at the mock IREPS server or back at the real portal.
+ * Convenience for engineers with a terminal handy: sets config.json's
+ * "target" field. Everyone else edits config.json directly - open it in any
+ * text editor, change "target" to "mock" or "real", save, then reload
+ * DocLink in chrome://extensions. That is the ONLY thing that needs to
+ * change; manifest.json declares both origins permanently.
  *
  *   node test/mock/switch-target.mjs mock     -> http://localhost:8765
  *   node test/mock/switch-target.mjs real     -> https://www.ireps.gov.in
  *   node test/mock/switch-target.mjs status
- *
- * It edits exactly two things and nothing else:
- *   - manifest.json        host_permissions
- *   - services/ireps-api.js IREPS_CONFIG.baseUrl
- *
- * Reload the extension on chrome://extensions after switching.
- * Always switch back to "real" before sharing or packaging the extension.
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -18,36 +15,33 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const manifestPath = join(root, "manifest.json");
-const apiPath = join(root, "services", "ireps-api.js");
-
-const REAL = "https://www.ireps.gov.in";
-const MOCK = `http://localhost:${process.env.PORT || 8765}`;
+const configPath = join(root, "config.json");
 
 const mode = process.argv[2];
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-let api = readFileSync(apiPath, "utf8");
-const current = (api.match(/baseUrl:\s*"([^"]+)"/) || [])[1];
+const config = JSON.parse(readFileSync(configPath, "utf8"));
+
+function effectiveBaseUrl(cfg) {
+  if (cfg.baseUrl) return cfg.baseUrl;
+  if (cfg.target === "real") return cfg.realBaseUrl || "https://www.ireps.gov.in";
+  return cfg.mockBaseUrl || "http://localhost:8765";
+}
 
 if (mode === "status" || !mode) {
-  console.log(`baseUrl: ${current}`);
-  console.log(`host_permissions: ${JSON.stringify(manifest.host_permissions)}`);
+  console.log(`target: ${config.target}`);
+  console.log(`effective baseUrl: ${effectiveBaseUrl(config)}`);
   if (!mode) console.log("\nusage: node test/mock/switch-target.mjs mock|real|status");
   process.exit(0);
 }
 
-const target = mode === "mock" ? MOCK : mode === "real" ? REAL : null;
-if (!target) {
+if (mode !== "mock" && mode !== "real") {
   console.error(`unknown mode "${mode}" (use mock | real | status)`);
   process.exit(1);
 }
 
-api = api.replace(/baseUrl:\s*"[^"]+"/, `baseUrl: "${target}"`);
-manifest.host_permissions = [`${target}/*`];
+config.target = mode;
+delete config.baseUrl; // an explicit override would otherwise keep pointing at the old target
+writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
-writeFileSync(apiPath, api);
-writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-
-console.log(`DocLink now targets ${target}`);
+console.log(`config.json target -> ${mode} (${effectiveBaseUrl(config)})`);
 console.log("Next: chrome://extensions -> reload DocLink");
-if (mode === "mock") console.log(`Then open ${target}/ in a tab and click Login.`);
+if (mode === "mock") console.log(`Then open ${effectiveBaseUrl(config)}/ in a tab and click Login.`);

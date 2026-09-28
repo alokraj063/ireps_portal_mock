@@ -18,7 +18,8 @@
     "sidePanel"
   ],
   "host_permissions": [
-    "http://localhost:8765/*"
+    "http://localhost:8765/*",
+    "https://www.ireps.gov.in/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js",

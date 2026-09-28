@@ -85,6 +85,11 @@
         <button id="btn-ma-open" class="btn btn-primary" type="button">Download MA</button>
       </article>
 
+      <article class="card" id="card-po-ic">
+        <h2>Download IREPS PO / Inspection Certificate</h2>
+        <button id="btn-po-ic-open" class="btn btn-primary" type="button">Download PO / IC</button>
+      </article>
+
       <article class="card card-muted" id="card-upload">
         <div class="card-heading">
           <h2>Upload Document</h2>
@@ -270,6 +275,74 @@
             <div class="result-actions">
               <button id="btn-ma-show-folder" class="btn btn-link" type="button" hidden>Show in folder</button>
               <button id="btn-ma-retry-failed" class="btn btn-link" type="button" hidden>Retry failed downloads</button>
+            </div>
+          </div>
+        </section>
+      </article>
+    </section>
+
+    <!-- ===================== PO / Inspection Certificate view ===================== -->
+    <section id="view-po-ic" class="view" hidden>
+      <article class="card">
+        <div class="card-heading">
+          <h2>IREPS Document Download</h2>
+          <button id="btn-po-ic-back" class="btn btn-link" type="button">Back</button>
+        </div>
+        <p class="card-text">Enter a PO Number once, then download the Purchase Order and/or its issued Inspection Certificates.</p>
+
+        <label class="field">
+          <span class="field-label">PO Number</span>
+          <input id="po-ic-number" type="text" autocomplete="off" placeholder="e.g. 27253922100240">
+        </label>
+
+        <section class="doc-results">
+          <h3 class="section-heading">Purchase Order</h3>
+          <button id="btn-po-download" class="btn btn-primary" type="button">
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <span class="btn-label">Download PO</span>
+          </button>
+          <div id="po-progress" class="progress" hidden>
+            <p class="progress-message" id="po-progress-message"></p>
+          </div>
+          <div id="po-error" class="result result-error" hidden>
+            <div class="result-title" id="po-error-title"></div>
+            <p id="po-error-message" class="result-text"></p>
+            <div class="result-actions">
+              <button id="btn-po-open-ireps" class="btn btn-link" type="button" hidden>Open IREPS</button>
+            </div>
+          </div>
+          <div id="po-result" class="result result-success" hidden>
+            <div class="result-title" id="po-result-title"></div>
+            <p id="po-result-filename" class="result-filename"></p>
+            <div class="result-actions">
+              <button id="btn-po-show-file" class="btn btn-link" type="button">Show in folder</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-results">
+          <h3 class="section-heading">Inspection Certificate</h3>
+          <button id="btn-ic-download" class="btn btn-primary" type="button">
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <span class="btn-label">Download Inspection Certificate</span>
+          </button>
+          <div id="ic-progress" class="progress" hidden>
+            <p class="progress-message" id="ic-progress-message"></p>
+          </div>
+          <div id="ic-error" class="result result-error" hidden>
+            <div class="result-title" id="ic-error-title"></div>
+            <p id="ic-error-message" class="result-text"></p>
+            <div class="result-actions">
+              <button id="btn-ic-open-ireps" class="btn btn-link" type="button" hidden>Open IREPS</button>
+            </div>
+          </div>
+          <div id="ic-result" class="result result-success" hidden>
+            <div class="result-title" id="ic-result-title"></div>
+            <p id="ic-result-text" class="result-text"></p>
+            <p class="result-filename" id="ic-result-folder"></p>
+            <div class="result-actions">
+              <button id="btn-ic-show-folder" class="btn btn-link" type="button" hidden>Show in folder</button>
+              <button id="btn-ic-retry" class="btn btn-link" type="button" hidden>Retry failed downloads</button>
             </div>
           </div>
         </section>

@@ -1,0 +1,139 @@
+<!--
+  Sanitised copy of the real IREPS Inspection Call List search result
+  (POST /epsn/tpi/vendorInspectionCallList.do, activity=searchResult,
+  statusSelected=Completed / IC Issued, poNo=27253922100240).
+
+  Structure follows the captured page: the same <form name="inspectionCallForm">
+  (now with totalRecords=4 and a fresh token) plus a
+  <table class="lightGrayTbl table-hover"> results table whose first three
+  columns (Call Date, TPI Agency, PO No. / Date) are rowspan="4" - the DOM
+  therefore only carries them on the FIRST of the four rows; rows 2-4 start
+  at Call Id. This is the real portal's layout for a PO with several issued
+  ICs (Call Id, PO Sr., PL No: Description, Type, Offer Qty., Registration
+  Date, Inspection Start Date, IC Date, Passed Qty., Call Status, Actions).
+  The IC PDF link's title is "View/ Download IC PDF" (with the internal
+  space, exactly as printed by the portal). Every value is fictitious except
+  the PO number itself; the Struts token is FAKE.
+-->
+<html lang="en">
+<head><title>My Inspection Calls</title></head>
+<body>
+<table><tr><td><a href="/epsn/home/showHome.do">Home</a></td></tr></table>
+
+<form name="inspectionCallForm" method="post" action="/epsn/tpi/vendorInspectionCallList.do">
+<input type="hidden" name="org.apache.struts.taglib.html.TOKEN" value="FAKE-TOKEN-0123456789abcdef0123456789abcdef">
+<input type="hidden" name="totalRecords" value="4" id="totalRecords">
+<input type="hidden" name="callType" id="callType" value="I">
+
+<table class="lightGrayTbl">
+<tr>
+  <th class="formLabel">Status</th>
+  <td class="formLabel"><select name="status" id="status"><option value="I">Completed / IC Issued</option></select></td>
+  <th class="formLabel">PO Number</th>
+  <td class="formLabel"><input type="text" name="poNo" value="27253922100240"></td>
+</tr>
+<tr>
+  <th class="formLabel">Call Date From</th>
+  <td class="formLabel"><input type="text" name="dateFrom" value="01/01/2025" readonly="readonly" id="dateFrom"></td>
+  <th class="formLabel">Call Date To</th>
+  <td class="formLabel"><input type="text" name="dateTo" value="18/09/2026" readonly="readonly" id="dateTo"></td>
+</tr>
+</table>
+<input type="hidden" name="statusSelected" id="statusSelected" value="Completed / IC Issued">
+</form>
+
+<table width="100%"><tr><td><b>Total Records: 4</b></td></tr></table>
+
+<table width="98%" border="0" class="lightGrayTbl table-hover" align="center">
+<tr style="border: 1px black; font-weight: bold; background-color: rgb(218, 238, 243);">
+  <th class="dataText"> Call Date</th>
+  <th class="dataText">TPI Agency</th>
+  <th class="dataText">PO No. / Date</th>
+  <th class="dataText">Call Id</th>
+  <th class="dataText">PO Sr.</th>
+  <th class="dataText">PL No: Description</th>
+  <th class="dataText">Type</th>
+  <th class="dataText">Offer Qty.</th>
+  <th class="dataText">Registration Date</th>
+  <th class="dataText">Inspection Start Date</th>
+  <th class="dataText">IC Date</th>
+  <th class="dataText">Passed Qty.</th>
+  <th class="dataText">Call Status</th>
+  <th class="dataText">Actions</th>
+</tr>
+<!-- IC rows from here -->
+<tr>
+  <td rowspan="4">05/05/2026</td>
+  <td rowspan="4">TUV INDIA PVT LTD.-MUMBAI</td>
+  <td rowspan="4"><a href="#" onclick="viewPastCall('01','6581067');">27253922100240<br /> dt. 16/01/2026</a></td>
+  <td class="dataText">6038184070</td>
+  <td class="dataText"><a href="#" onclick="viewPastCallpoSr('001','01','6581067');">001</a></td>
+  <td class="dataText">29160030: KIT FOR UNLOADER EXHAUST VALVE Part no 790002165.</td>
+  <td class="dataText">Product - Final Product Inspection</td>
+  <td class="dataText">106</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">07/05/2026</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">106</td>
+  <td class="dataText">Completed (IC Issued)</td>
+  <td class="dataText">
+    <a href="#" onclick="viewCall('7590398930','6038184070','01','6581067');"><img alt="View Call Details" src="/x.png" title="View Call Details"></a>
+    <a href="/ireps/etender/ct/tpi/ic/052026/3480517.pdf" target="_blank" title="View/ Download IC PDF"><img alt="View/ Download IC PDF" src="/y.png"></a>
+    <a href="#" onclick="icRevaidate('3480517');"><i class="fa fa-retweet"></i></a>
+  </td>
+</tr>
+<tr>
+  <td class="dataText">3778184071</td>
+  <td class="dataText"><a href="#" onclick="viewPastCallpoSr('002','01','6581067');">002</a></td>
+  <td class="dataText">29160031: KIT FOR UNLOADER EXHAUST VALVE Part no 790002166.</td>
+  <td class="dataText">Product - Final Product Inspection</td>
+  <td class="dataText">40</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">07/05/2026</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">40</td>
+  <td class="dataText">Completed (IC Issued)</td>
+  <td class="dataText">
+    <a href="#" onclick="viewCall('7590398931','3778184071','01','6581067');"><img alt="View Call Details" src="/x.png" title="View Call Details"></a>
+    <a href="/ireps/etender/ct/tpi/ic/052026/2975517.pdf" target="_blank" title="View/ Download IC PDF"><img alt="View/ Download IC PDF" src="/y.png"></a>
+    <a href="#" onclick="icRevaidate('2975517');"><i class="fa fa-retweet"></i></a>
+  </td>
+</tr>
+<tr>
+  <td class="dataText">9012184072</td>
+  <td class="dataText"><a href="#" onclick="viewPastCallpoSr('003','01','6581067');">003</a></td>
+  <td class="dataText">29160032: KIT FOR UNLOADER EXHAUST VALVE Part no 790002167.</td>
+  <td class="dataText">Product - Final Product Inspection</td>
+  <td class="dataText">12</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">07/05/2026</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">12</td>
+  <td class="dataText">Completed (IC Issued)</td>
+  <td class="dataText">
+    <a href="#" onclick="viewCall('7590398932','9012184072','01','6581067');"><img alt="View Call Details" src="/x.png" title="View Call Details"></a>
+    <a href="/ireps/etender/ct/tpi/ic/052026/6691517.pdf" target="_blank" title="View/ Download IC PDF"><img alt="View/ Download IC PDF" src="/y.png"></a>
+    <a href="#" onclick="icRevaidate('6691517');"><i class="fa fa-retweet"></i></a>
+  </td>
+</tr>
+<tr>
+  <td class="dataText">4523184073</td>
+  <td class="dataText"><a href="#" onclick="viewPastCallpoSr('004','01','6581067');">004</a></td>
+  <td class="dataText">29160033: KIT FOR UNLOADER EXHAUST VALVE Part no 790002168.</td>
+  <td class="dataText">Product - Final Product Inspection</td>
+  <td class="dataText">8</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">07/05/2026</td>
+  <td class="dataText">08/05/2026</td>
+  <td class="dataText">8</td>
+  <td class="dataText">Completed (IC Issued)</td>
+  <td class="dataText">
+    <a href="#" onclick="viewCall('7590398933','4523184073','01','6581067');"><img alt="View Call Details" src="/x.png" title="View Call Details"></a>
+    <a href="/ireps/etender/ct/tpi/ic/052026/8794517.pdf" target="_blank" title="View/ Download IC PDF"><img alt="View/ Download IC PDF" src="/y.png"></a>
+    <a href="#" onclick="icRevaidate('8794517');"><i class="fa fa-retweet"></i></a>
+  </td>
+</tr>
+<!-- IC rows up to here -->
+</table>
+</body>
+</html>
