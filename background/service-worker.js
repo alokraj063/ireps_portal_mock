@@ -58,7 +58,13 @@ import { downloadPo, PO_ERROR, PO_FLOW_STAGES } from "../services/po/po-service.
 import { downloadInspectionCertificates, IC_ERROR, IC_FLOW_STAGES } from "../services/inspection-certificate/ic-service.js";
 import { buildDocumentExportDownloadPath } from "../utils/filename.js";
 import { MESSAGE_TYPES, TARGETS, STAGES, DOCUMENT_STAGES, MA_STAGES, PO_STAGES, IC_STAGES, documentStageLabel, describeError, STORAGE_KEYS, SESSION_KEYS } from "../utils/messages.js";
-import { logger } from "../utils/logger.js";
+import { logger, installLogCollector, installConsoleHelpers } from "../utils/logger.js";
+import { classifyTabUrl } from "../utils/url-scope.js";
+
+// One stored DocLink log for all contexts (see utils/logger.js). Registered
+// first so entries sent by the panel / parser are never missed.
+installLogCollector();
+installConsoleHelpers();
 
 const OFFSCREEN_URL = chrome.runtime.getURL("background/offscreen.html");
 const PREVIEW_URL = chrome.runtime.getURL("pages/preview.html");
@@ -94,8 +100,13 @@ function broadcast(type, payload = {}) {
   });
 }
 
+/** Last Bill Status step written to the log (the same step can be reported by two layers). */
+let lastLoggedStep = "";
+
 async function progress(stage, message, detail) {
   const text = message || stage.label;
+  if (text !== lastLoggedStep) logger.info(`Bill Status: ${text}`, ...(detail ? [{ detail }] : []));
+  lastLoggedStep = text;
   await setJobState({ status: "running", stage: stage.id, message: text, detail: detail || "", error: undefined });
   broadcast(MESSAGE_TYPES.IREPS_PROGRESS, { stage: stage.id, message: text, detail: detail || "" });
 }
@@ -387,19 +398,20 @@ async function startDownloadJob(rawOptions) {
   if (jobRunning) return { started: false, error: describeError("BUSY") };
   jobRunning = true;
   const options = sanitiseOptions(rawOptions);
-  logger.info("Download workflow started", { mode: options.mode || "last90Days", zone: options.zone || "-1" });
+  lastLoggedStep = "";
+  logger.info("Bill Status started", { mode: options.mode || "last90Days", zone: options.zone || "-1" });
 
   (async () => {
     try {
       const summary = await runDownloadWorkflow(options);
       await setJobState({ status: "complete", stage: STAGES.COMPLETE.id, message: STAGES.COMPLETE.label, result: summary, error: undefined });
       broadcast(MESSAGE_TYPES.IREPS_DOWNLOAD_COMPLETE, summary);
-      logger.info("Download workflow complete", summary);
+      logger.info(`Bill Status complete: ${summary.recordCount} bills saved as ${summary.filename}`, summary);
     } catch (error) {
       const code = error instanceof WorkflowError ? error.code : "UNKNOWN";
       const described = describeError(code, error instanceof WorkflowError ? error.details : {});
-      if (code === "UNKNOWN") logger.error("Download workflow failed", error);
-      else logger.warn("Download workflow stopped", { code });
+      if (code === "UNKNOWN") logger.error("Bill Status failed", error);
+      else logger.warn(`Bill Status stopped: ${described.title}`, { code, message: described.message, status: (error && error.details && error.details.status) ?? null });
       if (code === IREPS_ERROR.SESSION_EXPIRED) lastSessionCheck = null;
       await recordLastStatus(described.title);
       await setJobState({ status: "error", stage: STAGES.ERROR.id, message: described.title, error: described, result: undefined });
@@ -458,6 +470,7 @@ async function setDocumentJob(criteria, patch) {
 
 async function documentProgress(criteria, stage, message, detail) {
   const text = message || documentStageLabel(stage, typeLabel(criteria));
+  logger.info(`${typeLabel(criteria)}: ${text}`);
   await setDocumentJob(criteria, { status: "running", stage: stage.id, message: text, detail: detail || "", error: undefined });
   broadcast(MESSAGE_TYPES.DOCUMENT_PROGRESS, { criteria, stage: stage.id, message: text, detail: detail || "" });
 }
@@ -608,12 +621,12 @@ async function startDocumentDownloadJob(rawCriteria, rawOptions) {
       const doneLabel = documentStageLabel(DOCUMENT_STAGES.COMPLETE, typeLabel(criteria));
       await setDocumentJob(criteria, { status: "complete", stage: DOCUMENT_STAGES.COMPLETE.id, message: doneLabel, result: summary, error: undefined });
       broadcast(MESSAGE_TYPES.DOCUMENT_DOWNLOAD_COMPLETE, summary);
-      logger.info(`${criteria} download complete`, { records: summary.recordCount, pages: summary.pagesFetched, filename: summary.filename });
+      logger.info(`${typeLabel(criteria)} complete: ${summary.recordCount} records saved as ${summary.filename}`, { records: summary.recordCount, pages: summary.pagesFetched, format: summary.format, downloadId: summary.downloadId });
     } catch (error) {
       const code = error instanceof WorkflowError ? error.code : "UNKNOWN";
       const described = { ...describeError(code, error instanceof WorkflowError ? error.details : {}), criteria };
-      if (code === "UNKNOWN") logger.error(`${criteria} workflow failed`, error);
-      else logger.warn(`${criteria} workflow stopped`, { code });
+      if (code === "UNKNOWN") logger.error(`${typeLabel(criteria)} failed`, error);
+      else logger.warn(`${typeLabel(criteria)} stopped: ${described.title}`, { code, message: described.message, status: (error && error.details && error.details.status) ?? null });
       if (code === SEARCH_PO_ERROR.SESSION_EXPIRED) {
         lastSessionCheck = null;
         lastSearchPoFormCheck = null;
@@ -704,6 +717,7 @@ async function restoreMaState() {
 
 function maProgress(stage, message, detail) {
   const text = message || stage.label;
+  logger.info(`MA: ${text}`);
   setMaState({ status: maState.status === "downloading" ? "downloading" : "searching", stage: stage.id, message: text, detail: detail || "", error: null });
   broadcast(MESSAGE_TYPES.MA_PROGRESS, { stage: stage.id, message: text, detail: detail || "", status: maState.status });
 }
@@ -788,7 +802,7 @@ async function startMaSearch(rawOptions) {
         lastSessionCheck = null;
         lastSearchPoFormCheck = null;
       }
-      logger.warn("MA search stopped", { code: described.code });
+      logger.warn(`MA search stopped: ${described.title}`, { code: described.code, message: described.message, status: (error && error.status) ?? null });
       await setMaState({ status: "error", stage: MA_STAGES.ERROR.id, message: described.title, error: described, records: [], recordCount: 0, downloads: null });
       broadcast(MESSAGE_TYPES.MA_ERROR, { ...described, phase: "search" });
     } finally {
@@ -848,6 +862,7 @@ async function startMaDownload(selection) {
       logger.info("MA download finished", { completed: summary.completed, failed: summary.failed, sessionExpired: summary.sessionExpired });
     } catch (error) {
       const described = maErrorFrom(error);
+      logger.warn(`MA download stopped: ${described.title}`, { code: described.code, message: described.message, status: (error && error.status) ?? null });
       await setMaState({ status: "ready", stage: MA_STAGES.READY.id, message: described.title, error: described });
       broadcast(MESSAGE_TYPES.MA_ERROR, { ...described, phase: "download" });
     } finally {
@@ -941,6 +956,7 @@ async function startPoDownload(rawPoNo) {
         onProgress: (stage) => {
           const s = PO_STAGE_FOR_PROGRESS[stage];
           if (!s) return;
+          logger.info(`PO ${poNo}: ${s.label}`);
           setPoState({ stage: s.id, message: s.label });
           broadcast(MESSAGE_TYPES.PO_PROGRESS, { poNumber: poNo, stage: s.id, message: s.label });
         }
@@ -954,7 +970,7 @@ async function startPoDownload(rawPoNo) {
     } catch (error) {
       const described = error instanceof IrepsError ? describeError(error.code, { status: error.status, detail: error.detail }) : describeError("UNKNOWN", { detail: errorDetail(error) });
       if (!(error instanceof IrepsError)) logger.error("PO download failed", error);
-      else logger.warn("PO download stopped", { code: error.code });
+      else logger.warn(`PO download stopped: ${described.title}`, { poNo, code: error.code, message: described.message, status: error.status ?? null });
       if (described.code === PO_ERROR.SESSION_EXPIRED) lastSessionCheck = null;
       await setPoState({ status: "error", stage: PO_STAGES.ERROR.id, message: described.title, error: described, result: undefined });
       broadcast(MESSAGE_TYPES.PO_DOWNLOAD_ERROR, { poNumber: poNo, ...described });
@@ -983,6 +999,7 @@ async function startIcDownload(rawPoNo) {
         onProgress: (stage) => {
           const s = IC_STAGE_FOR_PROGRESS[stage];
           if (!s) return;
+          logger.info(`IC ${poNo}: ${s.label}`);
           setIcState({ stage: s.id, message: s.label });
           broadcast(MESSAGE_TYPES.IC_PROGRESS, { poNumber: poNo, stage: s.id, message: s.label, status: "searching" });
         },
@@ -1020,7 +1037,7 @@ async function startIcDownload(rawPoNo) {
     } catch (error) {
       const described = error instanceof IrepsError ? describeError(error.code, { status: error.status, detail: error.detail }) : describeError("UNKNOWN", { detail: errorDetail(error) });
       if (!(error instanceof IrepsError)) logger.error("IC download failed", error);
-      else logger.warn("IC download stopped", { code: error.code });
+      else logger.warn(`IC download stopped: ${described.title}`, { poNo, code: error.code, message: described.message, status: error.status ?? null });
       if (described.code === IC_ERROR.SESSION_EXPIRED) lastSessionCheck = null;
       await setIcState({ status: "error", stage: IC_STAGES.ERROR.id, message: described.title, error: described });
       broadcast(MESSAGE_TYPES.IC_DOWNLOAD_ERROR, { poNumber: poNo, ...described });
@@ -1043,10 +1060,23 @@ const handlers = {
   },
   [MESSAGE_TYPES.DOWNLOAD_IREPS_BILL_STATUS]: (message) => startDownloadJob(message.options),
   [MESSAGE_TYPES.GET_JOB_STATE]: () => jobState,
-  [MESSAGE_TYPES.OPEN_IREPS]: async () => {
-    await chrome.tabs.create({ url: `${IREPS_CONFIG.baseUrl}${IREPS_CONFIG.homePath}` });
+  [MESSAGE_TYPES.OPEN_IREPS]: async (message) => {
+    const url = `${IREPS_CONFIG.baseUrl}${IREPS_CONFIG.homePath}`;
+    // From a side panel: load IREPS in that panel's own tab, so the panel
+    // (which belongs to the tab) stays open and switches to DocLink's tools.
+    if (typeof message.tabId === "number") {
+      try {
+        await chrome.tabs.update(message.tabId, { url, active: true });
+        return { ok: true };
+      } catch {
+        /* tab gone: fall back to a new tab */
+      }
+    }
+    await chrome.tabs.create({ url });
     return { ok: true };
   },
+  // Which view the side panel shows for a tab (see utils/url-scope.js).
+  [MESSAGE_TYPES.GET_TAB_SCOPE]: (message) => classifyTabUrl(message.url, IREPS_CONFIG, chrome.runtime.getManifest().host_permissions || []),
   [MESSAGE_TYPES.OPEN_PREVIEW]: async () => {
     await chrome.tabs.create({ url: PREVIEW_URL });
     return { ok: true };
@@ -1102,6 +1132,49 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => {
   logger.warn("Could not configure side panel behaviour", error);
 });
+
+/* -------------------------------------------------------------------------- */
+/* One side panel per tab                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * DocLink belongs to the tab it was opened on, not to the window. Chrome
+ * keeps a tab-specific side panel's open/closed state per tab: it hides the
+ * panel when the user switches to another tab and shows it again, as it was,
+ * when they come back. A tab where DocLink was never opened shows nothing.
+ *
+ * So the window-wide (global) panel is disabled, and every tab gets its own
+ * panel (the tab id in the URL only keeps the per-tab entries distinct; the
+ * panel itself follows whichever tab it is showing on, see
+ * popup/popup-gate.js): DocLink's tools on the configured IREPS portal, the
+ * "Go to IREPS and log in" page anywhere else.
+ */
+const SIDE_PANEL_PATH = (chrome.runtime.getManifest().side_panel || {}).default_path || "popup/popup.html";
+
+/** @param {number} tabId */
+async function enableTabPanel(tabId) {
+  if (typeof tabId !== "number" || tabId < 0) return;
+  try {
+    await chrome.sidePanel.setOptions({ tabId, path: `${SIDE_PANEL_PATH}?tabId=${tabId}`, enabled: true });
+  } catch (error) {
+    logger.debug(`Could not set the side panel for tab ${tabId}`, error);
+  }
+}
+
+async function enableTabPanelsForAllTabs() {
+  try {
+    await chrome.sidePanel.setOptions({ enabled: false }); // no window-wide panel
+    const tabs = await chrome.tabs.query({});
+    await Promise.all(tabs.map((tab) => enableTabPanel(tab.id)));
+  } catch (error) {
+    logger.warn("Could not set up per-tab side panels", error);
+  }
+}
+
+chrome.tabs.onCreated.addListener((tab) => enableTabPanel(tab.id));
+// A tab swapped in by prerendering / instant search gets a new id.
+chrome.tabs.onReplaced.addListener((addedTabId) => enableTabPanel(addedTabId));
+enableTabPanelsForAllTabs();
 
 chrome.runtime.onInstalled.addListener((details) => {
   logger.info(`DocLink installed (${details.reason})`);

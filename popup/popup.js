@@ -13,6 +13,8 @@ import { formatFriendlyDateTime } from "../utils/filename.js";
 import { initDocuments, handleDocumentMessage, restoreDocuments } from "./popup-documents.js";
 import { initMa, handleMaMessage, restoreMa } from "./popup-ma.js";
 import { initPoIc, handlePoIcMessage, restorePoIc } from "./popup-po-ic.js";
+import { initGate, currentPanelTabId } from "./popup-gate.js";
+import { logger, mirrorLogToConsole, installConsoleHelpers } from "../utils/logger.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,7 +24,6 @@ const el = {
   viewMain: $("view-main"),
   viewLogin: $("view-login"),
   viewUpload: $("view-upload"),
-  viewDocument: $("view-document"),
   viewMa: $("view-ma"),
   viewPoIc: $("view-po-ic"),
   options: $("options"),
@@ -84,11 +85,26 @@ let resultDownloadId = null;
 /* Messaging                                                                  */
 /* -------------------------------------------------------------------------- */
 
+/** Requests that only read state; logged at debug level, everything else is a user action. */
+const QUIET_TYPES = /^(GET_|CHECK_IREPS_SESSION|SEARCH_PO_LOAD_FORM)/;
+
 async function send(type, payload = {}) {
+  // "Open IREPS" (every view's button) loads IREPS in this panel's own tab.
+  if (type === MESSAGE_TYPES.OPEN_IREPS) {
+    const tabId = await currentPanelTabId();
+    if (tabId !== null) payload = { ...payload, tabId };
+  }
+  const quiet = QUIET_TYPES.test(type);
+  if (quiet) logger.debug(`Panel request: ${type}`);
+  else logger.info(`Panel action: ${type}`, payload);
   try {
-    return await chrome.runtime.sendMessage({ target: TARGETS.SERVICE_WORKER, type, ...payload });
+    const response = await chrome.runtime.sendMessage({ target: TARGETS.SERVICE_WORKER, type, ...payload });
+    // A job DocLink refused to start (busy, bad input) never reaches the worker's workflow log.
+    if (response && response.started === false) logger.warn(`Panel action refused: ${type}`, response.error || response);
+    if (response && response.ok === false && response.error) logger.warn(`Panel action failed: ${type}`, response.error);
+    return response;
   } catch (error) {
-    console.warn("[DocLink] popup message failed", type, error && error.message);
+    logger.error(`Panel could not reach the DocLink service worker (${type})`, error);
     return null;
   }
 }
@@ -122,7 +138,6 @@ function showView(name) {
   el.viewMain.hidden = name !== "main";
   el.viewLogin.hidden = name !== "login";
   el.viewUpload.hidden = name !== "upload";
-  el.viewDocument.hidden = name !== "document";
   el.viewMa.hidden = name !== "ma";
   el.viewPoIc.hidden = name !== "po-ic";
 }
@@ -134,7 +149,13 @@ function showLogin(described) {
   showView("login");
 }
 
-function setConnection(state, text) {
+/**
+ * @param {boolean} [fromGate]  only the gate may change the indicator while
+ *   it is up; background job messages would otherwise show "Connected" on a
+ *   non-IREPS tab.
+ */
+function setConnection(state, text, fromGate = false) {
+  if (document.body.dataset.gate === "on" && !fromGate) return;
   el.connection.dataset.state = state;
   el.connectionText.textContent = text;
 }
@@ -436,24 +457,48 @@ el.uploadForm.addEventListener("submit", async (event) => {
   el.uploadMessage.hidden = false;
 });
 
+/**
+ * First time the active tab is the configured IREPS portal: restore any job
+ * state and check the session. Later returns to an IREPS tab only refresh
+ * the session indicator (the views kept their state behind the gate).
+ */
+let bootstrapped = false;
+
+async function onIrepsTabActive() {
+  if (!bootstrapped) {
+    bootstrapped = true;
+    const restored = await restoreJobState();
+    const documentRestored = restored ? false : await restoreDocuments();
+    const maRestored = restored || documentRestored ? false : await restoreMa();
+    const poIcRestored = restored || documentRestored || maRestored ? false : await restorePoIc();
+    if (!restored && !documentRestored && !maRestored && !poIcRestored) showView("main");
+    const state = await send(MESSAGE_TYPES.GET_JOB_STATE);
+    if (!state || state.status !== "running") {
+      if (restored && state && state.status === "error" && state.error && state.error.loginRequired) {
+        setConnection("login", "Login Required");
+      } else {
+        await checkSession(false);
+      }
+    }
+    return;
+  }
+  const state = await send(MESSAGE_TYPES.GET_JOB_STATE);
+  if (state && state.status === "running") setConnection("connected", "Connected");
+  else await checkSession(false);
+}
+
 (async function init() {
+  // Everything DocLink logs (service worker, parser, panel) shows in this
+  // panel's console: right-click the panel > Inspect > Console.
+  installConsoleHelpers();
+  mirrorLogToConsole();
+  logger.info("Side panel opened");
   populateUploadForm();
   updateOptionsSummary();
   refreshMeta();
   initDocuments({ send, showView, setConnection, setConnectionForError, showLogin, showResult, hideResult });
   initMa({ send, showView, setConnection, setConnectionForError, showLogin });
   initPoIc({ send, showView, setConnection, setConnectionForError });
-  const restored = await restoreJobState();
-  const documentRestored = restored ? false : await restoreDocuments();
-  const maRestored = restored || documentRestored ? false : await restoreMa();
-  const poIcRestored = restored || documentRestored || maRestored ? false : await restorePoIc();
-  if (!restored && !documentRestored && !maRestored && !poIcRestored) showView("main");
-  const state = await send(MESSAGE_TYPES.GET_JOB_STATE);
-  if (!state || state.status !== "running") {
-    if (restored && state && state.status === "error" && state.error && state.error.loginRequired) {
-      setConnection("login", "Login Required");
-    } else {
-      await checkSession(false);
-    }
-  }
+  // Nothing talks to IREPS until the active tab is the configured portal.
+  await initGate({ send, setConnection, onActive: onIrepsTabActive });
 })();

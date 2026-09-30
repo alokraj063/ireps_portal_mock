@@ -140,6 +140,32 @@ Both `http://localhost:8765/*` and `https://www.ireps.gov.in/*` are declared
 in `manifest.json` permanently, so `config.json` is genuinely the only thing
 that changes - manifest.json is never touched by switching targets.
 
+### C2b. Test: DocLink belongs to its tab and only runs on the configured portal
+
+Each tab has its own DocLink panel. Chrome hides it when you switch to
+another tab and shows it again, exactly as you left it, when you come back.
+Its tools appear only while that tab is on the portal `config.json` targets
+(here the mock portal, `http://localhost:8765`). Nothing is sent to IREPS
+from any other page.
+
+1. On the mock portal tab, click the DocLink icon. The normal DocLink screen
+   appears with a session check (Connected or Login Required).
+2. Switch to another tab (e.g. Google). DocLink disappears.
+3. Switch back to the mock portal tab. DocLink is back, unchanged.
+4. Start a download, switch away and back: its progress or result is still
+   there (the download keeps running while the panel is hidden).
+5. Close DocLink on the mock tab, switch away and back: it stays closed.
+6. On a non-IREPS tab, click the DocLink icon. It shows **Go to IREPS and
+   log in**; **Open IREPS** loads the configured portal in that same tab and
+   DocLink switches to its normal screen.
+7. Open `https://www.ireps.gov.in/` in a tab while the target is `mock` and
+   open DocLink there: it says **This tab is the real IREPS portal** and
+   explains how to switch target.
+8. Optional: set `"baseUrl": "http://localhost:9999"` in `config.json` and
+   reload DocLink. DocLink shows **DocLink configuration error**, because
+   that origin is not in `manifest.json` host_permissions. Remove the line
+   and reload again.
+
 ### C3. Test: logged out (Acceptance Test 2)
 
 1. Open a new tab at http://localhost:8765/ — it shows the IREPS-style login page
@@ -263,10 +289,14 @@ CRN search (`searchCriteria=CRN`) is validated exactly like the real form
 the CRN result table.
 
 1. Make sure the mock shows "Logged in" and scenario `auto`.
-2. Open DocLink and click **Download CRN** on the *Download IREPS CRN* card.
-   The header shows **Connected** and the Railway list is filled from the
-   mock's PO Search page (All, Banaras Locomotive Works, … 41 entries).
-3. Click **Download CRN** (defaults: All, Last 180 Days, Excel).
+2. Open DocLink. The *Download IREPS CRN* card looks like the Bill Status
+   card: a collapsed **Search options** line reading "Last 180 Days, All
+   Railways · Excel". Expand it: Range (Last 180 Days / Select Date / PO
+   No.), Railway and File format. The Railway list is filled from the mock's
+   PO Search page the first time options are opened (All, Banaras Locomotive
+   Works, … 41 entries), and the R-NOTE card gets the same list.
+3. Click **Download CRN** in the card (defaults: All, Last 180 Days, Excel).
+   Progress and any error appear inside the CRN card.
 
 Expected:
 
@@ -308,9 +338,14 @@ Open the workbook and check:
 | `slow` | Download CRN | Progress stays on "Searching CRNs…" about 12 seconds, then completes |
 | Logged out (click Logout on the mock) | Download CRN | **IREPS login required**; no file |
 
-6. Close the popup during a `slow` **Download CRN** and reopen it: the CRN
-   view is restored with the progress, and the file is saved even though
-   the popup was closed.
+6. Close the panel during a `slow` **Download CRN** and reopen it: the CRN
+   card shows the progress again, and the file is saved even though the
+   panel was closed.
+7. Select Date without dates, or PO No. without a number, then Download:
+   the card shows **Invalid search options** with the reason; nothing is sent.
+8. Click **Download CRN** and immediately **Download R-NOTE**: the R-NOTE
+   card shows **Download Already Running** (one PO Search download at a
+   time); the CRN download completes normally.
 
 ### C9c. R-NOTE download with the mock portal
 
@@ -320,10 +355,9 @@ with an **assumed** R-NOTE table (the real layout is not captured yet):
 Challan Date, Invoice No., Invoice Date, Qty Received, Status, Action`, with
 fake document links under `/ireps/etender/ct/MOCK/RNOTE/…`.
 
-1. Logged in on the mock, scenario `auto`. Open DocLink → **Download R-NOTE**
-   on the *Download IREPS R-NOTE* card; the view title reads **IREPS R-NOTE
-   Download** and the Railway list is filled.
-2. Click **Download R-NOTE**.
+1. Logged in on the mock, scenario `auto`. Open DocLink; the *Download IREPS
+   R-NOTE* card has its own **Search options** (same controls as CRN).
+2. Click **Download R-NOTE** in the card.
 
 Expected:
 
@@ -522,6 +556,27 @@ adjusted. **IREPS form token not found** means the page no longer carries
 ---
 
 ## Where to look when something fails
+
+### The DocLink log
+
+Everything DocLink does is logged: each step of every workflow, every IREPS
+request (method, path, status, size, time), parser results, each file saved
+(path, size, Chrome download id) and every error (title, message, code,
+HTTP status). Cookies, session ids and form tokens are always redacted.
+
+- **Where:** right-click inside the DocLink side panel → **Inspect** →
+  **Console**. That one console shows the panel, the service worker and the
+  parser together; each line reads `[DocLink] 14:25:51.735 worker › ...`.
+- **History:** the last 1000 entries are kept (they survive a service-worker
+  restart and a browser restart). When the console opens, a collapsed group
+  "Earlier log" holds the most recent 100.
+- **Console helpers** (type them in that console):
+  `doclinkLog.dump()` prints the stored log as a table,
+  `doclinkLog.download()` saves it as a `.txt` file (attach it to a bug
+  report), `doclinkLog.clear()` empties it.
+- Filter the console with `DocLink` or a workflow name (`Bill Status`,
+  `CRN`, `R-NOTE`, `MA`, `PO`, `IC`); set the level to *Verbose* to also see
+  the debug lines (state requests).
 
 - **"DocLink Needs a Reload"** (or, before 1.1.0, a bare "Something Went
   Wrong") right after Search MAs: Chrome is still running an old background

@@ -40,12 +40,22 @@ const DEFAULT_REAL_BASE_URL = "https://www.ireps.gov.in";
 
 /** Mutable only through loadIrepsConfig(); everything else treats it as read-only. */
 let currentBaseUrl = DEFAULT_MOCK_BASE_URL;
+let currentTarget = "mock";
+let currentPortals = Object.freeze({ mock: DEFAULT_MOCK_BASE_URL, real: DEFAULT_REAL_BASE_URL });
 let configLoaded = false;
 
 /** Base configuration. Keep every IREPS URL here. baseUrl is a live getter so config.json can change it after this module has loaded. */
 export const IREPS_CONFIG = Object.freeze({
   get baseUrl() {
     return currentBaseUrl;
+  },
+  /** config.json's "target": "mock" | "real" (or "custom" when an explicit baseUrl overrides it). */
+  get target() {
+    return currentTarget;
+  },
+  /** Both portals named in config.json, whatever the target: { mock, real }. */
+  get portals() {
+    return currentPortals;
   },
   /** The portal's home page (captured: GET /epsn/home/showHome.do); "Open IREPS" lands here. */
   homePath: "/epsn/home/showHome.do",
@@ -72,13 +82,21 @@ export async function loadIrepsConfig({ force = false } = {}) {
     const url = typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL("config.json") : "./config.json";
     const response = await fetch(url, { cache: "no-store" });
     const config = await response.json();
+    const portals = Object.freeze({
+      mock: (config && config.mockBaseUrl && String(config.mockBaseUrl)) || DEFAULT_MOCK_BASE_URL,
+      real: (config && config.realBaseUrl && String(config.realBaseUrl)) || DEFAULT_REAL_BASE_URL
+    });
     if (config && typeof config.baseUrl === "string" && config.baseUrl) {
       currentBaseUrl = config.baseUrl; // explicit override, takes precedence over target
+      currentTarget = "custom";
     } else if (config && config.target === "real") {
-      currentBaseUrl = (config.realBaseUrl && String(config.realBaseUrl)) || DEFAULT_REAL_BASE_URL;
+      currentBaseUrl = portals.real;
+      currentTarget = "real";
     } else {
-      currentBaseUrl = (config && config.mockBaseUrl && String(config.mockBaseUrl)) || DEFAULT_MOCK_BASE_URL;
+      currentBaseUrl = portals.mock;
+      currentTarget = "mock";
     }
+    currentPortals = portals;
     logger.info(`IREPS config loaded: target=${(config && config.target) || "mock"}`);
   } catch (error) {
     logger.warn("Could not load config.json; keeping the current IREPS target", error);

@@ -33,6 +33,7 @@ import { runRnoteTests } from "./rnote-tests.js";
 import { runMaTests } from "./ma-tests.js";
 import { runPoTests } from "./po-tests.js";
 import { runIcTests } from "./ic-tests.js";
+import { compileMatchPatterns, compileMatchPattern, classifyTabUrl, TAB_SCOPE } from "../utils/url-scope.js";
 
 const results = [];
 const list = document.getElementById("results");
@@ -685,18 +686,24 @@ await test("loadIrepsConfig: target mock/real, explicit baseUrl override, custom
     served = { target: "mock" };
     await loadIrepsConfig({ force: true });
     eq(IREPS_CONFIG.baseUrl, "http://localhost:8765");
+    eq(IREPS_CONFIG.target, "mock");
+    eq(IREPS_CONFIG.portals.real, "https://www.ireps.gov.in", "both portals are known whatever the target");
 
     served = { target: "real" };
     await loadIrepsConfig({ force: true });
     eq(IREPS_CONFIG.baseUrl, "https://www.ireps.gov.in");
+    eq(IREPS_CONFIG.target, "real");
+    eq(IREPS_CONFIG.portals.mock, "http://localhost:8765");
 
     served = { target: "mock", baseUrl: "http://localhost:9999" };
     await loadIrepsConfig({ force: true });
     eq(IREPS_CONFIG.baseUrl, "http://localhost:9999", "an explicit baseUrl always wins over target");
+    eq(IREPS_CONFIG.target, "custom");
 
     served = { target: "mock", mockBaseUrl: "http://localhost:7000" };
     await loadIrepsConfig({ force: true });
     eq(IREPS_CONFIG.baseUrl, "http://localhost:7000");
+    eq(IREPS_CONFIG.portals.mock, "http://localhost:7000", "portals follow config.json, not a built-in list");
 
     let fetchCalls = 0;
     globalThis.fetch = async () => {
@@ -742,6 +749,54 @@ await test("logger redacts cookies, session ids and Struts tokens", () => {
 
 await test("filename format", () => {
   eq(buildBillStatusFilename(new Date(2026, 8, 15, 12, 30, 42)), "IREPS_Bill_Status_2026-09-15_12-30-42.pdf");
+});
+
+/* ------------------------------------------------- side panel URL scope */
+
+await test("url-scope: DocLink runs only on the config.json target portal; other tabs get the gate", async () => {
+  const manifest = await (await fetch("../manifest.json")).json();
+  const perms = manifest.host_permissions;
+  const portals = { mock: "http://localhost:8765", real: "https://www.ireps.gov.in" };
+  const mock = { baseUrl: portals.mock, target: "mock", portals };
+  const real = { baseUrl: portals.real, target: "real", portals };
+  const scope = (url, config) => classifyTabUrl(url, config, perms).scope;
+
+  eq(scope("http://localhost:8765/", mock), TAB_SCOPE.ACTIVE_PORTAL, "mock portal root");
+  eq(scope("http://localhost:8765/epsn/admin/viewBills.do?x=1", mock), TAB_SCOPE.ACTIVE_PORTAL, "mock portal page");
+  eq(scope("https://www.ireps.gov.in/epsn/home/showHome.do", real), TAB_SCOPE.ACTIVE_PORTAL, "real portal");
+
+  const other = classifyTabUrl("https://www.ireps.gov.in/epsn/home/showHome.do", mock, perms);
+  eq(other.scope, TAB_SCOPE.OTHER_PORTAL, "real portal tab while target is mock: requests would go to localhost");
+  eq(other.otherPortal, "real");
+  eq(other.portalUrl, portals.mock, "the gate offers the configured portal");
+  eq(scope("http://localhost:8765/", real), TAB_SCOPE.OTHER_PORTAL, "mock tab while target is real");
+
+  for (const url of ["https://www.google.com/", "chrome://newtab/", "http://localhost:8766/", "https://localhost:8765/", "http://ireps.gov.in/", "about:blank", "", undefined, "not a url"]) {
+    eq(scope(url, mock), TAB_SCOPE.NOT_IREPS, `not IREPS: ${url}`);
+  }
+
+  const custom = { baseUrl: "http://localhost:9999", target: "custom", portals };
+  eq(scope("http://localhost:9999/", custom), TAB_SCOPE.MISCONFIGURED, "a config origin the manifest does not allow is reported, never silently used");
+  eq(scope("https://www.google.com/", custom), TAB_SCOPE.MISCONFIGURED);
+  eq(classifyTabUrl("http://localhost:9999/", custom, [...perms, "http://localhost:9999/*"]).scope, TAB_SCOPE.ACTIVE_PORTAL, "allowed once host_permissions include it");
+});
+
+await test("url-scope: match pattern grammar (scheme wildcard, host wildcard, ports, <all_urls>, invalid)", () => {
+  const any = compileMatchPatterns(["*://*.example.com/*"]);
+  eq(any("https://example.com/"), true, "the domain itself");
+  eq(any("http://a.b.example.com/"), true, "subdomains");
+  eq(any("https://example.com:8443/"), true, "any port when the pattern names none");
+  eq(any("https://notexample.com/"), false);
+  eq(any("ftp://example.com/"), false, "* scheme means http or https only");
+  eq(compileMatchPatterns(["<all_urls>"])("https://anything.test/"), true);
+  eq(compileMatchPatterns(["<all_urls>"])("chrome://extensions"), false);
+  eq(compileMatchPatterns(["*://*/*"])("http://x.y/"), true);
+  eq(compileMatchPatterns(["http://LOCALHOST:8765/*"])("http://localhost:8765/"), true, "host is case-insensitive");
+  eq(compileMatchPatterns([])("http://localhost:8765/"), false, "no permissions, no panel");
+  eq(compileMatchPattern("localhost:8765"), null, "scheme required");
+  eq(compileMatchPattern("http://*foo.com/*"), null, "partial host wildcard");
+  eq(compileMatchPattern("http://foo.com"), null, "path required");
+  eq(compileMatchPattern(42), null);
 });
 
 /* ------------------------------------------------------------------- PDF */
