@@ -1,0 +1,12 @@
+{
+  "name": "doclink",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "javascript-obfuscator": "^4.1.1"
+  }
+}
