@@ -19,6 +19,23 @@
   </header>
 
   <main class="app-main">
+    <!-- ===================== Not-on-IREPS gate =====================
+         Shown instead of every other view (they keep their state) while the
+         active tab is not the IREPS portal config.json targets. -->
+    <section id="view-gate" class="view" hidden>
+      <article class="card card-attention">
+        <h2 id="gate-title">Go to IREPS and log in</h2>
+        <p class="card-text" id="gate-text">DocLink works only on the IREPS portal. This tab is not an IREPS page.</p>
+        <ol class="instructions" id="gate-steps">
+          <li>Open IREPS in this Chrome window</li>
+          <li>Log in using your normal security key</li>
+          <li>Keep the IREPS tab active - DocLink appears here automatically</li>
+        </ol>
+        <button id="btn-gate-open-ireps" class="btn btn-primary" type="button">Open IREPS</button>
+        <p class="gate-portal" id="gate-portal"></p>
+      </article>
+    </section>
+
     <!-- ===================== Main view ===================== -->
     <section id="view-main" class="view">
       <article class="card" id="card-download">
@@ -70,14 +87,13 @@
         </div>
       </article>
 
-      <article class="card" id="card-crn">
+      <!-- CRN / R-NOTE: same layout as Bill Status; the body comes from #tpl-doc-card (popup-documents.js) -->
+      <article class="card doc-card" id="card-crn" data-criteria="CRN">
         <h2>Download IREPS CRN</h2>
-        <button id="btn-crn-open" class="btn btn-primary" type="button" data-criteria="CRN">Download CRN</button>
       </article>
 
-      <article class="card" id="card-rnote">
+      <article class="card doc-card" id="card-rnote" data-criteria="RNOTE">
         <h2>Download IREPS R-NOTE</h2>
-        <button id="btn-rnote-open" class="btn btn-primary" type="button" data-criteria="RNOTE">Download R-NOTE</button>
       </article>
 
       <article class="card" id="card-ma">
@@ -126,68 +142,6 @@
         </ol>
         <button id="btn-open-ireps" class="btn btn-primary" type="button">Open IREPS</button>
         <button id="btn-login-back" class="btn btn-link" type="button">Back</button>
-      </article>
-    </section>
-
-    <!-- ===================== Document view (CRN / R-NOTE) ===================== -->
-    <section id="view-document" class="view" hidden>
-      <article class="card">
-        <div class="card-heading">
-          <h2 id="doc-title">IREPS CRN Download</h2>
-          <button id="btn-doc-back" class="btn btn-link" type="button">Back</button>
-        </div>
-        <p class="card-text" id="doc-intro">Runs the IREPS PO Search and downloads every result row (like the portal's Export to Excel, but complete).</p>
-
-        <form id="doc-form" class="form" novalidate>
-          <label class="field">
-            <span class="field-label">Railway</span>
-            <select id="doc-rly"><option value="-1">All</option></select>
-          </label>
-
-          <details class="options" id="doc-options">
-            <summary>Search options <span class="options-summary" id="doc-options-summary">Last 180 Days</span></summary>
-            <div class="options-body">
-              <label class="field">
-                <span class="field-label">PO Number (optional)</span>
-                <input id="doc-po" type="text" autocomplete="off" placeholder="Leave empty to search by date">
-              </label>
-              <div class="date-row">
-                <label class="field"><span class="field-label">From Date</span><input type="date" id="doc-date-from"></label>
-                <label class="field"><span class="field-label">To Date</span><input type="date" id="doc-date-to"></label>
-              </div>
-              <p class="field-hint">No PO number and no dates = Last 180 Days (IREPS default). Date range must be within 180 days.</p>
-              <label class="field">
-                <span class="field-label">File format</span>
-                <select id="doc-format"></select>
-              </label>
-            </div>
-          </details>
-
-          <button id="btn-doc-download" class="btn btn-primary" type="submit">
-            <span class="btn-spinner" aria-hidden="true"></span>
-            <span class="btn-label" id="btn-doc-label">Download</span>
-          </button>
-        </form>
-
-        <div id="doc-progress" class="progress" hidden>
-          <ol class="steps" id="doc-steps">
-            <li data-stage="CHECKING_SESSION">Checking IREPS session</li>
-            <li data-stage="SEARCHING" id="doc-step-search">Searching</li>
-            <li data-stage="PARSING" id="doc-step-parse">Reading records</li>
-            <li data-stage="GENERATING_FILE">Building the export file</li>
-            <li data-stage="DOWNLOADING">Downloading</li>
-          </ol>
-          <p class="progress-message" id="doc-progress-message"></p>
-        </div>
-
-        <div id="doc-result-error" class="result result-error" hidden>
-          <div class="result-title" id="doc-error-title"></div>
-          <p id="doc-error-message" class="result-text"></p>
-          <div class="result-actions">
-            <button id="btn-doc-open-ireps" class="btn btn-link" type="button" hidden>Open IREPS</button>
-            <button id="btn-doc-retry" class="btn btn-link" type="button">Try again</button>
-          </div>
-        </div>
       </article>
     </section>
 
@@ -391,6 +345,63 @@
       <span id="meta-status" class="meta-value">-</span>
     </div>
   </footer>
+
+  <!-- Body of the CRN / R-NOTE cards (IREPS PO Search controls). One copy per
+       card; the {label} words and radio group names are filled in per card. -->
+  <template id="tpl-doc-card">
+    <details class="options" data-role="options">
+      <summary>Search options <span class="options-summary" data-role="summary">Last 180 Days, All Railways</span></summary>
+      <div class="options-body">
+        <fieldset class="field">
+          <legend class="field-label">Range</legend>
+          <label class="radio"><input type="radio" data-role="range" value="last180Days" checked> Last 180 Days</label>
+          <label class="radio"><input type="radio" data-role="range" value="dateRange"> Select Date</label>
+          <div class="date-row" data-role="date-row" hidden>
+            <label class="field"><span class="field-label">From</span><input type="date" data-role="date-from"></label>
+            <label class="field"><span class="field-label">To</span><input type="date" data-role="date-to"></label>
+          </div>
+          <label class="radio"><input type="radio" data-role="range" value="poNumber"> PO No.</label>
+          <div class="po-row" data-role="po-row" hidden>
+            <input type="text" data-role="po" autocomplete="off" maxlength="30" placeholder="PO number" aria-label="PO number">
+          </div>
+          <p class="field-hint">Date range must be within 180 days.</p>
+        </fieldset>
+        <label class="field">
+          <span class="field-label">Railway</span>
+          <select data-role="rly"><option value="-1">All</option></select>
+        </label>
+        <label class="field">
+          <span class="field-label">File format</span>
+          <select data-role="format"></select>
+        </label>
+      </div>
+    </details>
+
+    <button class="btn btn-primary" type="button" data-role="download">
+      <span class="btn-spinner" aria-hidden="true"></span>
+      <span class="btn-label" data-role="label">Download</span>
+    </button>
+
+    <div class="progress" data-role="progress" hidden>
+      <ol class="steps">
+        <li data-stage="CHECKING_SESSION">Checking IREPS session</li>
+        <li data-stage="SEARCHING" data-role="step-search">Searching</li>
+        <li data-stage="PARSING" data-role="step-parse">Reading records</li>
+        <li data-stage="GENERATING_FILE">Building the export file</li>
+        <li data-stage="DOWNLOADING">Downloading</li>
+      </ol>
+      <p class="progress-message" data-role="progress-message"></p>
+    </div>
+
+    <div class="result result-error" data-role="error" hidden>
+      <div class="result-title" data-role="error-title"></div>
+      <p class="result-text" data-role="error-message"></p>
+      <div class="result-actions">
+        <button class="btn btn-link" type="button" data-role="open-ireps" hidden>Open IREPS</button>
+        <button class="btn btn-link" type="button" data-role="retry">Try again</button>
+      </div>
+    </div>
+  </template>
 
   <script type="module" src="popup.js"></script>
 </body>

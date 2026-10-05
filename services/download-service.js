@@ -32,7 +32,7 @@ export async function downloadPdf(bytes, options = {}) {
   const path = buildBillStatusDownloadPath(date);
   const url = pdfToDataUrl(bytes);
 
-  logger.info("Starting download", { path, bytes: bytes.length });
+  logger.info(`Starting download: ${path}`, { bytes: bytes.length });
 
   let downloadId;
   try {
@@ -43,15 +43,22 @@ export async function downloadPdf(bytes, options = {}) {
       saveAs: options.saveAs === true
     });
   } catch (error) {
+    logger.error("Chrome refused to start the download", { path, error });
     throw new DownloadError("Chrome refused to start the download", error);
   }
   if (downloadId === undefined) {
     throw new DownloadError(chrome.runtime.lastError?.message || "Chrome did not start the download");
   }
 
-  const finalPath = await waitForDownload(downloadId);
+  let finalPath;
+  try {
+    finalPath = await waitForDownload(downloadId);
+  } catch (error) {
+    logger.error("Download failed", { downloadId, path, error });
+    throw error;
+  }
   const finalName = finalPath ? finalPath.split(/[\\/]/).pop() : filename;
-  logger.info("Download complete", { downloadId, filename: finalName });
+  logger.info(`Download complete: ${finalName}`, { downloadId, path, bytes: bytes.length });
   return { downloadId, filename: finalName, path };
 }
 
@@ -85,7 +92,7 @@ export async function downloadBytes(bytes, options) {
   if (!options || !options.path) throw new DownloadError("A download path is required");
   const path = options.path;
   const url = bytesToDataUrl(bytes, options.mimeType || "application/octet-stream");
-  logger.info("Starting download", { path, bytes: bytes.length });
+  logger.info(`Starting download: ${path}`, { bytes: bytes.length });
 
   let downloadId;
   try {
@@ -96,14 +103,21 @@ export async function downloadBytes(bytes, options) {
       saveAs: options.saveAs === true
     });
   } catch (error) {
+    logger.error("Chrome refused to start the download", { path, error });
     throw new DownloadError("Chrome refused to start the download", error);
   }
   if (downloadId === undefined) {
     throw new DownloadError(chrome.runtime.lastError?.message || "Chrome did not start the download");
   }
-  const finalPath = await waitForDownload(downloadId);
+  let finalPath;
+  try {
+    finalPath = await waitForDownload(downloadId);
+  } catch (error) {
+    logger.error("Download failed", { downloadId, path, error });
+    throw error;
+  }
   const finalName = finalPath ? finalPath.split(/[\\/]/).pop() : path.split("/").pop();
-  logger.info("Download complete", { downloadId, filename: finalName });
+  logger.info(`Download complete: ${finalName}`, { downloadId, path, bytes: bytes.length });
   return { downloadId, filename: finalName, path };
 }
 
@@ -145,6 +159,7 @@ function waitForDownload(downloadId) {
     const timeout = setTimeout(() => {
       // A very large file may still be writing; report success with the
       // requested name rather than blocking the user.
+      logger.warn("Download not confirmed complete after 60 s; continuing", { downloadId });
       finish(resolve, null);
     }, 60000);
   });

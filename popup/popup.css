@@ -750,3 +750,36 @@ body {
 .result-error.is-notice .result-actions .btn-link {
   color: var(--warning);
 }
+
+/* -------------------------------------------------------- not-on-IREPS gate */
+
+/* While the gate is up, every other view and the footer are hidden without
+   touching their own [hidden] state, so a running job is intact on return. */
+body[data-gate="on"] .app-main > .view:not(#view-gate),
+body[data-gate="on"] .app-footer {
+  display: none !important;
+}
+
+.connection[data-state="away"] .dot {
+  background: #9aa4b1;
+  box-shadow: 0 0 0 3px rgba(154, 164, 177, 0.2);
+}
+.connection[data-state="away"] .connection-status {
+  color: var(--text-muted);
+}
+
+.gate-portal {
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+/* ------------------------------------------------------ CRN / R-NOTE cards */
+
+.po-row {
+  margin: 4px 0 6px 20px;
+}
+.po-row input {
+  width: 100%;
+}
